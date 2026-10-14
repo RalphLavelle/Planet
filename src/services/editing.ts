@@ -1,4 +1,4 @@
-import { ActivitySchema, type Activity, type Trip } from "@/domain/schemas";
+import { ActivitySchema, FlightsSchema, type Activity, type Trip } from "@/domain/schemas";
 import { newId } from "@/lib/ids";
 
 /** Pure, immutable itinerary operations. Every op returns a new Trip with updatedAt bumped. */
@@ -69,3 +69,8 @@ export function mergeRegenerated(current: Trip, regenerated: Trip["days"]): Trip
 }
 
 export { newId };
+
+/** Update flight details. Does NOT re-plan the itinerary; the UI offers "Regenerate" to refit days. */
+export function updateFlights(t: Trip, flights: Trip["flights"]): Trip {
+  return { ...t, flights: FlightsSchema.parse(flights), updatedAt: new Date().toISOString() };
+}

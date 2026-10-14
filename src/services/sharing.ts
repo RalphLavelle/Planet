@@ -7,8 +7,14 @@ import { newId } from "@/lib/ids";
 export const SnapshotSchema = z.object({ kind: z.literal("planet-snapshot"), version: z.literal(1), createdAt: z.string().datetime(), trip: TripSchema });
 export type Snapshot = z.infer<typeof SnapshotSchema>;
 
-export function createSnapshot(trip: Trip, opts: { includeAccommodation?: boolean } = {}): Snapshot {
-  const clean: Trip = { ...trip, accommodation: opts.includeAccommodation ? trip.accommodation : "", sharing: { mode: "snapshot", includeAccommodation: !!opts.includeAccommodation }, preferences: { ...trip.preferences, notes: "" } };
+export function createSnapshot(trip: Trip, opts: { includeAccommodation?: boolean; includeFlights?: boolean } = {}): Snapshot {
+  const clean: Trip = {
+    ...trip,
+    accommodation: opts.includeAccommodation ? trip.accommodation : "",
+    flights: opts.includeFlights ? trip.flights : {},
+    sharing: { mode: "snapshot", includeAccommodation: !!opts.includeAccommodation, includeFlights: !!opts.includeFlights },
+    preferences: { ...trip.preferences, notes: "" },
+  };
   return { kind: "planet-snapshot", version: 1, createdAt: new Date().toISOString(), trip: TripSchema.parse(clean) };
 }
 
@@ -31,5 +37,5 @@ export function parseSnapshot(text: string): { ok: true; snapshot: Snapshot } | 
 /** Imported trips get a fresh local id so they never overwrite an existing trip. */
 export function tripFromSnapshot(s: Snapshot): Trip {
   const now = new Date().toISOString();
-  return TripSchema.parse({ ...s.trip, id: newId("t_"), sharing: { mode: "private", includeAccommodation: false }, createdAt: now, updatedAt: now });
+  return TripSchema.parse({ ...s.trip, id: newId("t_"), sharing: { mode: "private", includeAccommodation: false, includeFlights: false }, createdAt: now, updatedAt: now });
 }

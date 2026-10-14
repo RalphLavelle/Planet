@@ -2,7 +2,7 @@
 import type React from "react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Accessibility, ArrowLeft, ArrowRight, BedDouble, CalendarCheck, CalendarDays, Check, Clock, Coins, Footprints, Gauge, Heart, ListChecks, MapPin, PiggyBank, RefreshCw, Salad, SlidersHorizontal, Sparkles, StickyNote, Users } from "lucide-react";
+import { Accessibility, ArrowLeft, ArrowRight, BedDouble, CalendarCheck, CalendarDays, Check, Clock, Coins, Footprints, Gauge, Heart, ListChecks, MapPin, PiggyBank, PlaneLanding, PlaneTakeoff, RefreshCw, Salad, SlidersHorizontal, Sparkles, StickyNote, Users } from "lucide-react";
 import { destinationImage, placeImage } from "@/services/images";
 import { resolveDestination } from "@/services/itinerary/DemoItineraryGenerator";
 import { PhotoCredit } from "@/components/ui";
@@ -28,6 +28,7 @@ export default function NewTrip() {
   const [departureDate, setDeparture] = useState(isoIn(17));
   const [nativeCurrency, setCurrency] = useState("GBP");
   const [accommodation, setAccommodation] = useState("");
+  const [arrNum, setArrNum] = useState(""), [arrTime, setArrTime] = useState(""), [depNum, setDepNum] = useState(""), [depTime, setDepTime] = useState("");
   const [prefs, setPrefs] = useState<Preferences>(PreferencesSchema.parse({}));
   const [errors, setErrors] = useState<Errors>({});
   const [draft, setDraft] = useState<Trip | null>(null);
@@ -36,15 +37,16 @@ export default function NewTrip() {
   const [saveError, setSaveError] = useState("");
 
   // Restore an unconfirmed draft from this tab's session storage.
-  useEffect(() => { getServices().drafts.getDraft().then((d) => { if (d) { setDraft(d); setDestination(d.destination.name); setArrival(d.arrivalDate); setDeparture(d.departureDate); setCurrency(d.nativeCurrency); setAccommodation(d.accommodation); setPrefs(d.preferences); setStep(2); } }); }, []);
+  useEffect(() => { getServices().drafts.getDraft().then((d) => { if (d) { setDraft(d); setDestination(d.destination.name); setArrival(d.arrivalDate); setDeparture(d.departureDate); setCurrency(d.nativeCurrency); setAccommodation(d.accommodation); setArrNum(d.flights.arrival?.number ?? ""); setArrTime(d.flights.arrival?.time ?? ""); setDepNum(d.flights.departure?.number ?? ""); setDepTime(d.flights.departure?.time ?? ""); setPrefs(d.preferences); setStep(2); } }); }, []);
 
-  const input = { destination, arrivalDate, departureDate, nativeCurrency, accommodation, preferences: prefs };
+  const flight = (number: string, time: string) => (number.trim() || time ? { number: number.trim() || undefined, time: time || undefined } : undefined);
+  const input = { destination, arrivalDate, departureDate, nativeCurrency, accommodation, flights: { arrival: flight(arrNum, arrTime), departure: flight(depNum, depTime) }, preferences: prefs };
 
   function validateBasics(): boolean {
     const r = TripInputSchema.safeParse(input);
     if (r.success) { setErrors({}); return true; }
     const e: Errors = {};
-    for (const i of r.error.issues) { const k = String(i.path[0]); if (!e[k]) e[k] = i.message; }
+    for (const i of r.error.issues) { const k = i.path.join("."); if (!e[k]) e[k] = i.message; }
     setErrors(e);
     return false;
   }
@@ -107,6 +109,17 @@ export default function NewTrip() {
               <div className="field"><label htmlFor="acc"><BedDouble size={15} aria-hidden="true" /> Staying in (optional)</label><input id="acc" value={accommodation} onChange={(e) => setAccommodation(e.target.value)} placeholder="Neighbourhood or hotel name" maxLength={200} />
                 <p className="help">A general area is fine. Never included in shared links unless you choose.</p></div>
             </div>
+            <fieldset className="flight-fields">
+              <legend><PlaneLanding size={15} aria-hidden="true" /> Flights (optional)</legend>
+              <p className="help">We use these times to start day one after you land and finish the last day in time for the airport. Times are local; nothing is looked up online.</p>
+              <div className="grid2">
+                <div className="field"><label htmlFor="arr-fn"><PlaneLanding size={15} aria-hidden="true" /> Arrival flight</label><input id="arr-fn" value={arrNum} onChange={(e) => setArrNum(e.target.value)} placeholder="e.g. A3 601" maxLength={8} aria-invalid={!!errors["flights.arrival.number"]} />{errors["flights.arrival.number"] && <p className="err">{errors["flights.arrival.number"]}</p>}</div>
+                <div className="field"><label htmlFor="arr-ft">Lands at</label><input id="arr-ft" type="time" value={arrTime} onChange={(e) => setArrTime(e.target.value)} /></div>
+                <div className="field"><label htmlFor="dep-fn"><PlaneTakeoff size={15} aria-hidden="true" /> Departure flight</label><input id="dep-fn" value={depNum} onChange={(e) => setDepNum(e.target.value)} placeholder="e.g. A3 602" maxLength={8} aria-invalid={!!errors["flights.departure.number"]} />{errors["flights.departure.number"] && <p className="err">{errors["flights.departure.number"]}</p>}</div>
+                <div className="field"><label htmlFor="dep-ft">Takes off at</label><input id="dep-ft" type="time" value={depTime} onChange={(e) => setDepTime(e.target.value)} /></div>
+              </div>
+              {errors.flights && <p className="err" role="alert">{errors.flights}</p>}
+            </fieldset>
             <div className="row end"><button className="btn" type="submit">Next <ArrowRight size={18} aria-hidden="true" /></button></div>
           </form>
         )}

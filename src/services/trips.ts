@@ -8,7 +8,7 @@ export async function generateTrip(input: TripInput, generator: ItineraryGenerat
   const now = new Date().toISOString();
   return TripSchema.parse({
     schemaVersion: TRIP_SCHEMA_VERSION, id: newId("t_"), destination: g.destination, arrivalDate: valid.arrivalDate, departureDate: valid.departureDate,
-    nativeCurrency: valid.nativeCurrency, accommodation: valid.accommodation, preferences: valid.preferences, days: g.days, places: g.places,
+    nativeCurrency: valid.nativeCurrency, accommodation: valid.accommodation, flights: valid.flights, preferences: valid.preferences, days: g.days, places: g.places,
     sharing: { mode: "private", includeAccommodation: false }, generator: g.generator, createdAt: now, updatedAt: now,
   });
 }

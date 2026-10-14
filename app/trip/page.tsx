@@ -44,7 +44,7 @@ function TripPageInner() {
   async function regenerate() {
     if (!trip) return;
     const s = getServices();
-    const g = await s.generator.generate({ destination: trip.destination.name, arrivalDate: trip.arrivalDate, departureDate: trip.departureDate, nativeCurrency: trip.nativeCurrency, accommodation: trip.accommodation, preferences: trip.preferences }, { seed: seed.current++ });
+    const g = await s.generator.generate({ destination: trip.destination.name, arrivalDate: trip.arrivalDate, departureDate: trip.departureDate, nativeCurrency: trip.nativeCurrency, accommodation: trip.accommodation, flights: trip.flights, preferences: trip.preferences }, { seed: seed.current++ });
     persist(mergeRegenerated(trip, g.days), "Regenerated itinerary (your edits kept)", trip);
   }
 

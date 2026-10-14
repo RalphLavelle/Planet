@@ -106,9 +106,29 @@ export const DestinationSchema = z.object({
 });
 export type Destination = z.infer<typeof DestinationSchema>;
 
+/** IATA-style flight number: 2-char airline code + 1–4 digits (+ optional suffix), e.g. "A3 601". */
+export const FLIGHT_NUMBER_RE = /^([A-Z0-9]{2})\s?(\d{1,4}[A-Z]?)$/;
+export function normalizeFlightNumber(v: string): string {
+  const m = v.trim().toUpperCase().replace(/\s+/g, " ").match(FLIGHT_NUMBER_RE);
+  return m ? `${m[1]} ${m[2]}` : v.trim().toUpperCase();
+}
+export const FlightSchema = z.object({
+  number: z.string().transform(normalizeFlightNumber).pipe(z.string().regex(FLIGHT_NUMBER_RE, "Use a flight number like A3 601")).optional(),
+  /** Local time at the destination airport (arrival) / departure time (departure). */
+  time: TimeSchema.optional(),
+});
+export type Flight = z.infer<typeof FlightSchema>;
+export const FlightsSchema = z.object({ arrival: FlightSchema.optional(), departure: FlightSchema.optional() });
+export type Flights = z.infer<typeof FlightsSchema>;
+
+/** Buffers used to shape first/last days around flights. */
+export const ARRIVAL_BUFFER_MIN = 150; // baggage, transfer, check-in
+export const DEPARTURE_BUFFER_MIN = 180; // leave for the airport ~3 h before take-off
+
 export const SharingSchema = z.object({
   mode: z.enum(["private", "snapshot"]).default("private"),
   includeAccommodation: z.boolean().default(false),
+  includeFlights: z.boolean().default(false),
   /** Reserved for a future server-backed share token. Not used for access control in the browser MVP. */
   accessToken: z.string().optional(),
 });
@@ -121,6 +141,7 @@ export const TripSchema = z.object({
   departureDate: IsoDateSchema,
   nativeCurrency: CurrencyCodeSchema,
   accommodation: z.string().max(200).default(""),
+  flights: FlightsSchema.default({}),
   preferences: PreferencesSchema,
   days: z.array(ItineraryDaySchema),
   places: z.array(PlaceSchema).default([]),
@@ -141,6 +162,7 @@ export const TripInputSchema = z
     departureDate: IsoDateSchema,
     nativeCurrency: CurrencyCodeSchema,
     accommodation: z.string().trim().max(200).default(""),
+    flights: FlightsSchema.default({}),
     preferences: PreferencesSchema.prefault({}),
   })
   .superRefine((v, ctx) => {
@@ -150,6 +172,9 @@ export const TripInputSchema = z
     if (d < a) ctx.addIssue({ code: "custom", path: ["departureDate"], message: "Departure must be on or after arrival" });
     else if (days > MAX_TRIP_DAYS)
       ctx.addIssue({ code: "custom", path: ["departureDate"], message: `Trips can be at most ${MAX_TRIP_DAYS} days in this version` });
+    const at = v.flights.arrival?.time, dt = v.flights.departure?.time;
+    if (days === 1 && at && dt && dt <= at)
+      ctx.addIssue({ code: "custom", path: ["flights"], message: "On a same-day trip the departure flight must be after the arrival flight" });
   });
 export type TripInput = z.input<typeof TripInputSchema>;
 export type ValidTripInput = z.output<typeof TripInputSchema>;

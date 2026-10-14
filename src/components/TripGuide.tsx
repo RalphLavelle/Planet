@@ -14,6 +14,9 @@ import { createSnapshot, encodeSnapshot } from "@/services/sharing";
 import * as edit from "@/services/editing";
 import { CategoryOrnament, DestinationHero, DestinationMotif, OrnamentRow, ThemeBullet, ThemedSectionDivider, useDestinationTheme } from "./theme";
 import { destinationImage } from "@/services/images";
+import { FlightCard } from "./FlightCard";
+import { MiniMap } from "./MiniMap";
+import type { GeoPoint } from "@/domain/schemas";
 import { ActivityCategoryIcon, ActivityThumb, CATEGORY_LABEL, PhotoCredit, StatusBadge } from "./ui";
 
 type Props = { trip: Trip; readOnly?: boolean; onChange?: (next: Trip, label: string) => void; onRegenerate?: () => void };
@@ -60,6 +63,16 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
   const [editing, setEditing] = useState<string | null>(null);
   const [activeDay, setActiveDay] = useState(trip.days[0]?.id);
   const [includeAcc, setIncludeAcc] = useState(false);
+  const [includeFlights, setIncludeFlights] = useState(false);
+  const [flightsChanged, setFlightsChanged] = useState(false);
+  const [base, setBase] = useState<GeoPoint | null>(null);
+  useEffect(() => {
+    let live = true;
+    if (!trip.accommodation) { setBase(null); return; }
+    services.geocoder.geocode(`${trip.accommodation}, ${trip.destination.name}${trip.destination.country ? ", " + trip.destination.country : ""}`).then((p) => live && setBase(p));
+    return () => { live = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trip.accommodation, trip.destination.name]);
   const [copied, setCopied] = useState("");
   const heroPhoto = destinationImage(trip.destination.catalogKey);
   const catalog = trip.destination.catalogKey ? findCatalogDestination(trip.destination.catalogKey) : undefined;
@@ -89,9 +102,9 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
     setTimeout(() => setCopied(""), 2500);
   }
   const localUrl = typeof window !== "undefined" ? `${window.location.origin}/trip/?id=${trip.id}` : "";
-  const snapshotUrl = () => `${window.location.origin}/shared#${encodeSnapshot(createSnapshot(trip, { includeAccommodation: includeAcc }))}`;
+  const snapshotUrl = () => `${window.location.origin}/shared#${encodeSnapshot(createSnapshot(trip, { includeAccommodation: includeAcc, includeFlights }))}`;
   function download() {
-    const blob = new Blob([JSON.stringify(createSnapshot(trip, { includeAccommodation: includeAcc }), null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(createSnapshot(trip, { includeAccommodation: includeAcc, includeFlights }), null, 2)], { type: "application/json" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `planet-${trip.destination.name.toLowerCase().replace(/\W+/g, "-")}-${trip.arrivalDate}.json`; a.click(); URL.revokeObjectURL(a.href);
   }
 
@@ -122,6 +135,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
                     : a.origin === "generated" ? <li className="muted"><Wallet size={14} aria-hidden="true" /> Cost unknown</li> : null}
                   {a.location && <li><a href={services.directions.directionsUrl(a.location, trip.accommodation ? `${trip.accommodation}, ${trip.destination.name}` : undefined)} target="_blank" rel="noopener noreferrer"><Navigation size={14} aria-hidden="true" /> Directions<span className="sr-only"> to {a.title} (opens Google Maps)</span></a></li>}
                 </ul>
+                {a.location && <MiniMap stop={a.location} base={base} accent={theme.tokens.secondary} />}
                 {sugg && !readOnly && (
                   <div className="suggest" role="note"><CloudRain size={16} aria-hidden="true" /> {sugg.reason}{swapTitle ? <> Swap with <strong>{swapTitle}</strong>?</> : null}
                     {sugg.swapWithActivityId && <button className="btn btn-small btn-ghost" onClick={() => apply(edit.swapActivities(trip, a.id, sugg.swapWithActivityId!), `Swapped “${a.title}” for “${swapTitle}”`)}>Swap</button>}
@@ -197,9 +211,12 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
               </div>
               <span className="day-motif"><DestinationMotif size={34} /></span>
             </header>
+            {i === 0 && <FlightCard kind="arrival" flight={trip.flights.arrival} readOnly={readOnly} onSave={(f) => { apply(edit.updateFlights(trip, { ...trip.flights, arrival: f }), "Updated arrival flight"); setFlightsChanged(true); }} />}
+            {i === 0 && flightsChanged && !readOnly && <p className="notice notice-warn">Flight times changed. Your plans haven&apos;t been moved. {onRegenerate && <button className="btn btn-small btn-ghost" onClick={() => { setFlightsChanged(false); onRegenerate(); }}>Refit itinerary to flights</button>}</p>}
             {day.activities.length === 0 ? (
               <div className="empty small"><DestinationMotif size={28} /><p>A free day. Wander, rest, or add something below.</p></div>
             ) : <ol className="activities">{day.activities.map((a, idx) => renderActivity(day, a, idx))}</ol>}
+            {i === trip.days.length - 1 && <FlightCard kind="departure" flight={trip.flights.departure} readOnly={readOnly} onSave={(f) => { apply(edit.updateFlights(trip, { ...trip.flights, departure: f }), "Updated departure flight"); setFlightsChanged(true); }} />}
             {!readOnly && <AddActivity onAdd={(v) => apply(edit.addActivity(trip, day.id, v), `Added “${v.title}”`)} />}
           </section>
         );
@@ -244,8 +261,9 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
             </div>
             <div className="share-col">
               <h3><ExternalLink size={16} aria-hidden="true" /> Portable read-only link</h3>
-              <p className="muted">Packs a snapshot of the itinerary into the link itself, so it works anywhere. Later edits aren&apos;t included — share again after changes. Your notes are removed.</p>
+              <p className="muted">Packs a snapshot of the itinerary into the link itself, so it works anywhere. Later edits aren&apos;t included — share again after changes. Your notes are removed; accommodation and flights are left out unless you tick them.</p>
               <label className="check"><input type="checkbox" checked={includeAcc} onChange={(e) => setIncludeAcc(e.target.checked)} /> Include where I&apos;m staying</label>
+              <label className="check"><input type="checkbox" checked={includeFlights} onChange={(e) => setIncludeFlights(e.target.checked)} /> Include my flight details</label>
               <div className="row">
                 <button className="btn btn-small" onClick={() => copy(snapshotUrl(), "snap")}><Copy size={14} aria-hidden="true" /> {copied === "snap" ? "Copied!" : "Copy portable link"}</button>
                 <button className="btn btn-ghost btn-small" onClick={download}><Download size={14} aria-hidden="true" /> Export file</button>

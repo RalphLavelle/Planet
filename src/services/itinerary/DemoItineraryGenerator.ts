@@ -3,6 +3,7 @@ import {
   type Activity, type ActivityCategory, type Destination, type Interest, type ItineraryDay, type Place, type Preferences, type ValidTripInput,
 } from "@/domain/schemas";
 import { addMinutes, datesBetween } from "@/lib/dates";
+import { ARRIVAL_BUFFER_MIN, DEPARTURE_BUFFER_MIN } from "@/domain/schemas";
 import { newId } from "@/lib/ids";
 import { findCatalogDestination, type CatalogDestination, type CatalogPlace } from "./catalog";
 import type { GeneratedItinerary, ItineraryGenerator } from "./ItineraryGenerator";
@@ -80,29 +81,48 @@ export class DemoItineraryGenerator implements ItineraryGenerator {
       });
     };
 
-    const take = (list: CatalogPlace[], cycle: boolean): CatalogPlace | undefined => {
-      const fresh = list.find((p) => !used.has(p.key));
-      if (fresh) { used.add(fresh.key); return fresh; }
-      return cycle && list.length ? list[Math.floor(rand() * list.length)] : undefined;
-    };
 
     const dates = datesBetween(input.arrivalDate, input.departureDate);
     const slowMult = prefs.party === "family" ? 1.15 : 1;
+    const arrT = input.flights?.arrival?.time, depT = input.flights?.departure?.time;
+    const toMin = (x: string) => { const [h, m] = x.split(":").map(Number); return h * 60 + m; };
+    const fromMin = (n: number) => { const c = Math.max(0, Math.min(n, 23 * 60 + 59)); return `${String(Math.floor(c / 60)).padStart(2, "0")}:${String(c % 60).padStart(2, "0")}`; };
+    const round15 = (n: number) => Math.ceil(n / 15) * 15;
+    const defaultStart = prefs.pace === "packed" ? "08:30" : prefs.pace === "relaxed" ? "10:00" : "09:30";
+
     const days: ItineraryDay[] = dates.map((date, i) => {
       const acts: Activity[] = [];
-      const firstOrLast = dates.length > 1 && (i === 0 || i === dates.length - 1);
-      const nSights = Math.max(1, SIGHT_SLOTS[prefs.pace] - (firstOrLast ? 1 : 0));
-      let t = i === 0 && dates.length > 1 ? "14:00" : prefs.pace === "packed" ? "08:30" : prefs.pace === "relaxed" ? "10:00" : "09:30";
-      const add = (p: CatalogPlace | undefined, gap = 30) => { if (!p) return; const a = toActivity(p, t, slowMult); acts.push(a); t = addMinutes(t, a.durationMinutes + gap); };
-      const morning = i === 0 && dates.length > 1 ? 0 : Math.ceil(nSights / 2);
-      for (let s = 0; s < morning; s++) add(take(ranked, false));
-      if (!(i === 0 && dates.length > 1)) { if (t < "12:30") t = "13:00"; add(take(lunches, true)); }
-      for (let s = morning; s < nSights; s++) add(take(ranked, false));
-      if (t < "19:30") t = "19:30"; else t = addMinutes(t, 15);
-      add(take(dinners, true));
-      if (prefs.interests.includes("nightlife") || (prefs.pace === "packed" && rand() > 0.5)) add(take(nightlife, false));
+      const isFirst = i === 0, isLast = i === dates.length - 1, multi = dates.length > 1;
+      // Earliest start: after arrival + buffer on day 1 (or 14:00 if no time given); latest end: departure - buffer on the last day.
+      let earliest = defaultStart;
+      if (isFirst && arrT) earliest = fromMin(Math.max(toMin(defaultStart), round15(toMin(arrT) + ARRIVAL_BUFFER_MIN)));
+      else if (isFirst && multi) earliest = "14:00";
+      const latest = isLast && depT ? fromMin(toMin(depT) - DEPARTURE_BUFFER_MIN) : "23:59";
+      const shortDay = (isFirst || isLast) && multi;
+      const nSights = Math.max(1, SIGHT_SLOTS[prefs.pace] - (shortDay ? 1 : 0));
+
+      let t = earliest;
+      const fits = (p: CatalogPlace) => toMin(t) >= toMin(earliest) && toMin(t) + Math.round(p.durationMinutes * slowMult) <= toMin(latest);
+      const takeFit = (list: CatalogPlace[], cycle: boolean) => {
+        const fresh = list.find((p) => !used.has(p.key) && fits(p));
+        if (fresh) { used.add(fresh.key); return fresh; }
+        const any = cycle ? list.filter(fits) : [];
+        return any.length ? any[Math.floor(rand() * any.length)] : undefined;
+      };
+      const add = (p: CatalogPlace | undefined, gap = 30) => { if (!p) return false; const a = toActivity(p, t, slowMult); acts.push(a); t = addMinutes(t, a.durationMinutes + gap); return true; };
+
+      let s = 0;
+      const morning = Math.ceil(nSights / 2);
+      while (s < morning && toMin(t) < toMin("12:00")) { if (!add(takeFit(ranked, false))) break; s++; }
+      if (toMin(t) <= toMin("14:30")) { if (toMin(t) < toMin("12:30")) t = "13:00"; add(takeFit(lunches, true)); }
+      while (s < nSights && toMin(t) < toMin("18:00")) { if (!add(takeFit(ranked, false))) break; s++; }
+      if (toMin(t) < toMin("19:30")) t = "19:30"; else t = addMinutes(t, 15);
+      if (toMin(t) <= toMin("21:30")) add(takeFit(dinners, true));
+      if (prefs.interests.includes("nightlife") || (prefs.pace === "packed" && rand() > 0.5)) add(takeFit(nightlife, false));
+
       const title = acts.find((a) => a.category !== "food")?.title;
-      return ItineraryDaySchema.parse({ id: newId("d_"), date, title: i === 0 && dates.length > 1 ? "Arrival & first look" : title ? `Day ${i + 1}: ${title.split(/[&,(]/)[0].trim()}` : `Day ${i + 1}`, notes: "", activities: acts });
+      const dayTitle = isFirst && multi ? "Arrival & first look" : isLast && multi && depT ? "Last look & departure" : title ? `Day ${i + 1}: ${title.split(/[&,(]/)[0].trim()}` : `Day ${i + 1}`;
+      return ItineraryDaySchema.parse({ id: newId("d_"), date, title: dayTitle, notes: "", activities: acts });
     });
 
     return { destination, days, places, generator: this.id };

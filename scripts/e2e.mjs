@@ -27,6 +27,11 @@ await page.screenshot({ path: out("02-wizard-validation"), fullPage: true });
 await page.fill("#dep", "2026-11-13");
 await page.selectOption("#cur", "GBP");
 await page.fill("#acc", "Koukaki");
+await page.fill("#arr-fn", "flight 9"); await page.getByRole("button", { name: "Next" }).click();
+assert(await page.getByText("Use a flight number like A3 601").isVisible(), "validation: flight number format");
+await page.fill("#arr-fn", "a3601"); await page.fill("#arr-ft", "11:20");
+await page.fill("#dep-fn", "A3 602"); await page.fill("#dep-ft", "18:30");
+await page.locator("fieldset.flight-fields").screenshot({ path: out("03b-wizard-flights") });
 await page.getByRole("button", { name: "Next" }).click();
 for (const i of ["history", "food", "nightlife"]) await page.locator("label.chip", { hasText: i }).click();
 await page.screenshot({ path: out("03-wizard-preferences"), fullPage: true });
@@ -38,6 +43,17 @@ await page.waitForURL(/\/trip\/?\?id=/);
 await page.getByRole("heading", { name: "Athens", level: 1 }).waitFor();
 await page.waitForTimeout(2500); // weather fetch
 const tripUrl = page.url().replace("&created=1", "");
+assert((await page.locator(".flight-card").count()) === 2, "arrival + departure flight cards shown");
+assert(await page.locator(".flight-arrival").getByText("A3 601").isVisible(), "flight number normalised");
+const d1times = await page.locator(".day").nth(0).locator(".activity-time span").allInnerTexts();
+assert(d1times.every((t) => t >= "13:50"), "day 1 starts after arrival + buffer (" + d1times.join(",") + ")");
+await page.locator(".flight-arrival").scrollIntoViewIfNeeded();
+await page.locator(".day").nth(0).locator(".activity").first().scrollIntoViewIfNeeded();
+await page.locator(".minimap .leaflet-tile-loaded").first().waitFor({ timeout: 20000 });
+await page.waitForTimeout(1200);
+assert(await page.locator(".minimap-dist").first().isVisible(), "mini map shows crow-flies distance from geocoded base");
+await page.locator(".day").nth(0).screenshot({ path: out("05b-day1-flight-minimap") });
+await page.locator(".day").nth(0).locator(".activity").first().screenshot({ path: out("05c-activity-minimap") });
 assert((await page.locator(".day").count()) === 4, "4 days generated for 10–13 Nov");
 await page.screenshot({ path: out("05-guide-athens-desktop"), fullPage: false });
 await page.screenshot({ path: out("06-guide-athens-full"), fullPage: true });
@@ -73,6 +89,12 @@ assert((await titles(day1)).length === n - 1, "remove activity");
 await page.locator(".toast").getByRole("button", { name: "Undo" }).click();
 assert((await titles(day1)).includes("Pick up ferry tickets"), "undo restores removed activity");
 
+// Edit departure flight
+await page.getByRole("button", { name: "Edit departure flight" }).click();
+await page.fill("#ft-departure", "16:00"); await page.getByRole("button", { name: "Save flight" }).click();
+assert(await page.locator(".flight-departure").getByText("departs 16:00").isVisible(), "edit flight later");
+assert(await page.getByRole("button", { name: "Refit itinerary to flights" }).isVisible(), "offers refit, does not silently move plans");
+await page.locator(".day").last().screenshot({ path: out("05d-last-day-departure") });
 // Regenerate keeps edits
 await page.getByRole("button", { name: "Regenerate itinerary" }).click();
 await page.waitForTimeout(800);

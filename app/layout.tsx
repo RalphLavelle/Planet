@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import Link from "next/link";
+import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
 const serif = Fraunces({ subsets: ["latin"], variable: "--font-serif", display: "swap" });

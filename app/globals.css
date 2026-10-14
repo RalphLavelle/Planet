@@ -257,3 +257,23 @@ input[aria-invalid=true] { border-color: #b3261e; }
 .credits li { display: flex; gap: var(--space-3); align-items: center; font-size: .85rem; }
 .credits img { width: 72px; height: 54px; object-fit: cover; border-radius: 6px; flex: none; }
 .themed .themed { min-height: 0; background: transparent; }
+
+/* ===== v3: flights & mini maps ===== */
+.flight-card { position: relative; display: grid; grid-template-columns: auto 1fr auto; gap: var(--space-3); align-items: start; padding: var(--space-4); margin: 0 0 var(--space-4); border-radius: var(--radius); border: 1px dashed color-mix(in srgb, var(--primary) 45%, transparent); background: color-mix(in srgb, var(--primary) 6%, var(--surface)) var(--pattern); }
+.flight-departure { margin: var(--space-4) 0 0; }
+.flight-icon { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: var(--primary); color: var(--primary-ink); box-shadow: 0 0 0 5px color-mix(in srgb, var(--primary) 15%, transparent); }
+.flight-body h4 { font-size: 1.2rem; margin: 0 0 4px; }
+.flight-note { display: flex; gap: 6px; align-items: flex-start; margin: 0; font-size: .9rem; }
+.flight-note svg { flex: none; margin-top: 3px; }
+.flight-form { display: grid; gap: var(--space-3); grid-template-columns: 1fr 1fr; align-items: end; }
+.flight-form .row, .flight-form .err { grid-column: 1 / -1; }
+.flight-add { margin: 0 0 var(--space-3); }
+.flight-fields { border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space-4); display: grid; gap: var(--space-3); }
+.flight-fields legend { padding: 0 6px; }
+.minimap { position: relative; margin-top: var(--space-3); }
+.minimap-canvas { height: 170px; border-radius: var(--radius-s); overflow: hidden; background: #e9e6df; border: 1px solid var(--line); z-index: 0; }
+.minimap-dist { display: inline-flex; gap: 5px; align-items: center; font-size: .78rem; color: var(--muted); margin: 6px 0 0; }
+.minimap-attr { position: absolute; right: 6px; top: 148px; margin: 0; font-size: .6rem; background: rgba(255,255,255,.8); padding: 1px 4px; border-radius: 4px; color: #333; }
+.pin span { display: block; width: 18px; height: 18px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
+.pin-home span { background: #1f2a37; border-radius: 4px; transform: none; position: relative; }
+.pin-home span::after { content: "⌂"; color: #fff; position: absolute; inset: 0; display: grid; place-items: center; font-size: 12px; line-height: 1; }
