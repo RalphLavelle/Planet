@@ -82,3 +82,8 @@ app/               Next.js App Router pages: / , /new (3-step wizard), /trip?id=
 
 ## Deployment
 The app is fully client-side, so it ships as a static export (`npm run build:static`). Trip pages use `/trip/?id=…` (query param) instead of a dynamic `/trip/[id]` segment so they work on any static host without rewrites. Remember that trips live in each visitor's browser storage, scoped to the site's origin.
+
+## Images & iconography
+- Sample-place photos: freely licensed Wikimedia Commons images (CC BY / CC BY-SA / CC0 / public domain), resized to ≤720 px JPEG and bundled in `public/images/places/`. Metadata (author, licence, source) lives in `src/services/itinerary/imageCredits.json`; every photo shows an on-image credit and all are listed at `/credits`. `scripts/fetch-images.py` regenerates them from Wikipedia lead images (the Acropolis Museum image was then hand-swapped for the CC BY 4.0 "Pensive Athena" relief because the lead image is a logo). Images are resolved via `src/services/images.ts`, keyed by place id, so existing saved trips pick them up too. Places with no image get a themed ornament placeholder.
+- Functional icons: Lucide everywhere (wizard fields, steps, times, durations, costs, weather, nav, map stops, sharing).
+- Decorative: themes can define `categoryOrnaments`, `Bullet` and `Ornaments`. Athens adds original SVG column, amphora, olive branch/leaf, mati, sun-over-sea, Greek-key tile and caïque boat (`src/themes/greekOrnaments.tsx`).

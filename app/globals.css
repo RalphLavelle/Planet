@@ -190,3 +190,70 @@ input[aria-invalid=true] { border-color: #b3261e; }
 .toast-err { background: #8c1d18; }
 .undo-fab { position: fixed; right: 16px; bottom: 16px; z-index: 40; box-shadow: var(--shadow); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+
+/* ===== v2: photos, ornaments, richer iconography ===== */
+.field label, .field legend, .eyebrow, .panel-sub { display: inline-flex; align-items: center; gap: 6px; }
+.field label svg, .field legend svg { color: var(--primary); }
+.steps li { display: flex; align-items: center; gap: 6px; }
+.panel-sub { font-size: 1rem; margin-top: var(--space-4); }
+.divider-label { display: inline-flex; align-items: center; gap: 10px; }
+.divider-label svg:not([width="20"]) { color: var(--secondary); }
+.ornament-row { display: flex; gap: 12px; align-items: center; margin: var(--space-4) 0 0; flex-wrap: wrap; }
+.bullets { list-style: none; padding: 0; margin: var(--space-3) 0 var(--space-4); display: grid; gap: 8px; }
+.bullets li { display: flex; gap: 10px; align-items: center; }
+.bullet { flex: none; }
+
+/* Hero photo: arched frame like a doorway on a Cycladic island */
+.hero-visual.has-photo { position: relative; display: grid; justify-items: center; align-items: end; }
+.hero-photo { position: relative; margin: 0 0 -6px; width: min(78%, 330px); aspect-ratio: 4 / 5; border-radius: 999px 999px 18px 18px; overflow: hidden; border: 6px solid var(--surface); box-shadow: 0 18px 40px rgba(20,30,50,.22); z-index: 1; }
+.hero-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.hero-visual.has-photo .hero-art { position: absolute; bottom: 0; left: 0; right: 0; opacity: .9; }
+@media (max-width: 759px) { .hero-photo { width: 62%; aspect-ratio: 1 / 1; } }
+
+.photo-credit { position: absolute; right: 6px; bottom: 6px; z-index: 2; display: inline-flex; gap: 4px; align-items: center; font-size: .62rem; line-height: 1.2; color: #fff; background: rgba(10,15,25,.55); padding: 2px 6px; border-radius: 6px; text-decoration: none; max-width: calc(100% - 12px); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.photo-credit:hover { background: rgba(10,15,25,.8); }
+
+/* Activity thumbnails */
+.thumb-photo::before { display: none; }
+.thumb-photo { background: #ddd; }
+@media (min-width: 680px) { .activity-card { grid-template-columns: 200px 1fr; } .thumb { min-height: 150px; } }
+.thumb-fallback { position: relative; width: 78px; height: 78px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); box-shadow: 0 0 0 6px color-mix(in srgb, var(--surface) 50%, transparent); }
+.thumb-icon-small { position: absolute; right: -4px; bottom: -4px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--primary); color: var(--primary-ink); }
+.activity-time { justify-items: start; gap: 2px; }
+.cat-badge .motif { margin-right: 2px; }
+.tag { display: inline-flex; gap: 4px; align-items: center; }
+.wx-strip small { display: inline-flex; align-items: center; gap: 3px; }
+.day-nav-title { display: inline-flex; gap: 5px; align-items: center; }
+.stops li > svg { color: var(--secondary); }
+
+/* Home: photo trip cards & featured */
+.trip-card.has-photo { padding: 0; overflow: hidden; color: #fff; min-height: 190px; align-content: end; }
+.trip-card-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.trip-card.has-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(10,20,35,.78)); }
+.trip-card-text { position: relative; z-index: 1; display: grid; gap: 3px; padding: var(--space-4); }
+.trip-card-text span { display: inline-flex; gap: 6px; align-items: center; font-size: .88rem; }
+.trip-card-motif, .trip-card-arrow { z-index: 1; }
+.trip-card.has-photo .trip-card-motif { background: rgba(255,255,255,.9); border-radius: 50%; padding: 4px; display: inline-flex; }
+.featured { display: grid; gap: 0; background: var(--surface) var(--pattern); border: 1px solid var(--line); border-radius: var(--radius-l); overflow: hidden; box-shadow: var(--shadow); margin: var(--space-5) 0; position: relative; }
+.featured::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 14px; background: var(--divider) repeat-x center; opacity: .6; z-index: 1; }
+.featured-photo { margin: 0; position: relative; min-height: 220px; }
+.featured-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.featured-body { padding: var(--space-6) var(--space-5) var(--space-5); }
+.featured-body h2 { font-size: 2rem; color: var(--primary); }
+@media (min-width: 760px) { .featured { grid-template-columns: 1fr 1.1fr; } .featured-photo { min-height: 340px; } }
+.feature-icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: color-mix(in srgb, var(--primary) 12%, var(--surface)); color: var(--primary); margin-bottom: var(--space-2); }
+
+/* Wizard */
+.dest-preview { position: relative; margin: var(--space-2) 0 0; border-radius: var(--radius); overflow: hidden; height: 160px; }
+.dest-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dest-preview figcaption { position: absolute; left: 10px; bottom: 10px; background: rgba(255,255,255,.92); color: #1f2a37; padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: .85rem; display: inline-flex; gap: 5px; align-items: center; }
+.mini-thumb { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; flex: none; }
+.mini-fallback { display: grid; place-items: center; background: color-mix(in srgb, var(--primary) 8%, var(--surface)); }
+.preview-list li { gap: 12px; }
+.time { display: inline-flex; gap: 4px; align-items: center; width: 4.4em; }
+
+/* Credits */
+.credits { list-style: none; padding: 0; display: grid; gap: var(--space-3); }
+.credits li { display: flex; gap: var(--space-3); align-items: center; font-size: .85rem; }
+.credits img { width: 72px; height: 54px; object-fit: cover; border-radius: 6px; flex: none; }
+.themed .themed { min-height: 0; background: transparent; }

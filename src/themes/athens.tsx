@@ -1,3 +1,4 @@
+import { Amphora, Column, GreekBoat, KeyTile, OliveBranch, OliveLeaf, SunSea } from "./greekOrnaments";
 import type { DestinationTheme } from "./types";
 
 const svg = (s: string) => `url("data:image/svg+xml,${encodeURIComponent(s)}")`;
@@ -64,5 +65,11 @@ export const athensTheme: DestinationTheme = {
   HeroArt: Parthenon,
   Motif: EvilEye,
   Sprig: OliveSprig,
+  categoryOrnaments: {
+    sight: Column, museum: Amphora, food: Amphora, cafe: Amphora, nature: OliveBranch, walk: OliveBranch,
+    viewpoint: SunSea, beach: SunSea, transport: GreekBoat, nightlife: EvilEye, shopping: KeyTile, custom: EvilEye,
+  },
+  Bullet: OliveLeaf,
+  Ornaments: [Column, Amphora, OliveBranch, EvilEye, SunSea, KeyTile],
   matches: (d) => d.countryCode === "GR" || d.catalogKey === "athens",
 };

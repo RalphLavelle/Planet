@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowDown, ArrowUp, CalendarDays, Clock, CloudRain, CloudSun, Copy, Download, ExternalLink, Lightbulb, Link2, MapPin, Navigation, Pencil, Plus,
+  ArrowDown, ArrowUp, CalendarDays, Clock, Droplets, Hourglass, Home, Map as MapIcon, Share2, Trees, Sparkles, ListOrdered, CloudRain, CloudSun, Copy, Download, ExternalLink, Lightbulb, Link2, MapPin, Navigation, Pencil, Plus,
   RefreshCw, Sun, Thermometer, Trash2, Wallet,
 } from "lucide-react";
 import type { Activity, ItineraryDay, Trip } from "@/domain/schemas";
@@ -12,8 +12,9 @@ import { findCatalogDestination } from "@/services/itinerary/catalog";
 import type { RefreshReport } from "@/services/refresh";
 import { createSnapshot, encodeSnapshot } from "@/services/sharing";
 import * as edit from "@/services/editing";
-import { DestinationHero, DestinationMotif, ThemedSectionDivider, useDestinationTheme } from "./theme";
-import { ActivityCategoryIcon, ActivityThumb, CATEGORY_LABEL, StatusBadge } from "./ui";
+import { CategoryOrnament, DestinationHero, DestinationMotif, OrnamentRow, ThemeBullet, ThemedSectionDivider, useDestinationTheme } from "./theme";
+import { destinationImage } from "@/services/images";
+import { ActivityCategoryIcon, ActivityThumb, CATEGORY_LABEL, PhotoCredit, StatusBadge } from "./ui";
 
 type Props = { trip: Trip; readOnly?: boolean; onChange?: (next: Trip, label: string) => void; onRegenerate?: () => void };
 
@@ -60,6 +61,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
   const [activeDay, setActiveDay] = useState(trip.days[0]?.id);
   const [includeAcc, setIncludeAcc] = useState(false);
   const [copied, setCopied] = useState("");
+  const heroPhoto = destinationImage(trip.destination.catalogKey);
   const catalog = trip.destination.catalogKey ? findCatalogDestination(trip.destination.catalogKey) : undefined;
 
   async function refresh() {
@@ -98,14 +100,14 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
     const swapTitle = sugg?.swapWithActivityId && trip.days.flatMap((d) => d.activities).find((x) => x.id === sugg.swapWithActivityId)?.title;
     return (
       <li key={a.id} className="activity">
-        <div className="activity-time"><span>{a.startTime ?? "—"}</span><small>{formatDuration(a.durationMinutes)}</small></div>
+        <div className="activity-time"><Clock size={14} aria-hidden="true" className="muted" /><span>{a.startTime ?? "—"}</span><small>{formatDuration(a.durationMinutes)}</small></div>
         <article className="activity-card">
-          <ActivityThumb category={a.category} imageRef={a.imageRef} alt={a.title} />
+          <ActivityThumb category={a.category} placeId={a.placeId} imageRef={a.imageRef} alt={a.title} />
           <div className="activity-body">
             <p className="badge-row">
-              <span className="cat-badge"><ActivityCategoryIcon category={a.category} size={14} /> {CATEGORY_LABEL[a.category]}</span>
+              <span className="cat-badge"><CategoryOrnament category={a.category} size={18} /><ActivityCategoryIcon category={a.category} size={14} /> {CATEGORY_LABEL[a.category]}</span>
               {a.origin !== "generated" ? <StatusBadge status="user" /> : <StatusBadge status={a.meta.status} />}
-              {a.indoor && <span className="tag">Indoors</span>}
+              {a.indoor ? <span className="tag"><Home size={12} aria-hidden="true" /> Indoors</span> : a.origin === "generated" ? <span className="tag"><Trees size={12} aria-hidden="true" /> Outdoors</span> : null}
             </p>
             {editing === a.id && !readOnly ? (
               <ActivityEditor a={a} onCancel={() => setEditing(null)} onSave={(p) => { apply(edit.updateActivity(trip, day.id, a.id, p), `Edited “${p.title}”`); setEditing(null); }} />
@@ -115,7 +117,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
                 {a.description && <p className="desc">{a.description}</p>}
                 {a.notes && <p className="notes"><Pencil size={14} aria-hidden="true" /> {a.notes}</p>}
                 <ul className="facts">
-                  <li><Clock size={14} aria-hidden="true" /> {a.startTime ? `${a.startTime} · ` : ""}{formatDuration(a.durationMinutes)}</li>
+                  {a.startTime && <li><Clock size={14} aria-hidden="true" /> {a.startTime}</li>}<li><Hourglass size={14} aria-hidden="true" /> {formatDuration(a.durationMinutes)}</li>
                   {a.cost ? <li><Wallet size={14} aria-hidden="true" /> {formatEstimate(a.cost)}{conv(a.cost) ? <span className="muted"> ({conv(a.cost)})</span> : null} <span className="muted">illustrative</span></li>
                     : a.origin === "generated" ? <li className="muted"><Wallet size={14} aria-hidden="true" /> Cost unknown</li> : null}
                   {a.location && <li><a href={services.directions.directionsUrl(a.location, trip.accommodation ? `${trip.accommodation}, ${trip.destination.name}` : undefined)} target="_blank" rel="noopener noreferrer"><Navigation size={14} aria-hidden="true" /> Directions<span className="sr-only"> to {a.title} (opens Google Maps)</span></a></li>}
@@ -149,13 +151,15 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
 
   return (
     <div className="guide">
-      <DestinationHero eyebrow={`${trip.destination.country ? trip.destination.country + " · " : ""}${theme.tagline}`} title={trip.destination.name}>
+      <DestinationHero eyebrow={`${trip.destination.country ? trip.destination.country + " · " : ""}${theme.tagline}`} title={trip.destination.name}
+        photo={heroPhoto ? <figure className="hero-photo">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={heroPhoto.src} alt={`${trip.destination.name}`} /><PhotoCredit credit={heroPhoto} /></figure> : undefined}>
         <p className="lede">{catalog?.intro ?? `Your personalised guide to ${trip.destination.name}. This destination uses Planet's general template — swap in your own finds as you go.`}</p>
         <ul className="hero-facts">
           <li><CalendarDays size={16} aria-hidden="true" /> {formatDay(trip.arrivalDate, { day: "numeric", month: "short" })} – {formatDay(trip.departureDate, { day: "numeric", month: "short", year: "numeric" })} · {trip.days.length} day{trip.days.length > 1 ? "s" : ""}</li>
           {trip.accommodation && <li><MapPin size={16} aria-hidden="true" /> Staying in {trip.accommodation}</li>}
           {total && <li><Wallet size={16} aria-hidden="true" /> {formatEstimate(total)} in activities &amp; meals per person (illustrative)</li>}
         </ul>
+        <OrnamentRow />
       </DestinationHero>
 
       <section className="panel weather" aria-labelledby="wx-h">
@@ -167,7 +171,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
           </div>
         </div>
         {report?.weather.data?.length ? (
-          <ul className="wx-strip">{report.weather.data.map((w) => <li key={w.date}><span>{formatDay(w.date, { weekday: "short", day: "numeric" })}</span><WeatherIcon code={w.code} /><strong>{Math.round(w.tempMaxC)}°</strong><small>{Math.round(w.tempMinC)}° · {w.summary}{w.precipitationChance != null ? ` · ${w.precipitationChance}%` : ""}</small></li>)}</ul>
+          <ul className="wx-strip">{report.weather.data.map((w) => <li key={w.date}><span>{formatDay(w.date, { weekday: "short", day: "numeric" })}</span><WeatherIcon code={w.code} /><strong>{Math.round(w.tempMaxC)}°</strong><small>{Math.round(w.tempMinC)}° · {w.summary}</small>{w.precipitationChance != null && <small><Droplets size={11} aria-hidden="true" /> {w.precipitationChance}%</small>}</li>)}</ul>
         ) : report ? <p className="muted">No forecast available{report.weather.error ? ` — ${report.weather.error}` : ""}. {report.weather.source}</p> : <p className="muted">Fetching forecast…</p>}
         <p className="source">Source: {report?.weather.source ?? "—"}{report?.rate ? <> · Currency: {report.rate.data ? `1 ${report.rate.data.from} = ${report.rate.data.value.toFixed(report.rate.data.value < 1 ? 4 : 2)} ${report.rate.data.to} (${report.rate.status}, ${report.rate.data.asOf})` : `conversion unavailable (${report.rate.error ?? report.rate.source})`}</> : null}</p>
         {!!report?.suggestions.length && !readOnly && <p className="notice notice-warn"><CloudRain size={16} aria-hidden="true" /> Rain may affect {report.suggestions.length} outdoor plan(s). Suggestions are shown on those activities — nothing has been changed.</p>}
@@ -176,7 +180,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
       <nav className="day-nav" aria-label="Days">
         {trip.days.map((d, i) => (
           <a key={d.id} href={`#day-${d.id}`} className={d.id === activeDay ? "on" : ""} onClick={() => setActiveDay(d.id)}>
-            <span className="day-nav-motif"><DestinationMotif size={14} /></span>Day {i + 1}<small>{formatDay(d.date, { weekday: "short", day: "numeric" })}</small>
+            <span className="day-nav-motif"><DestinationMotif size={14} /></span><span className="day-nav-title"><CalendarDays size={13} aria-hidden="true" /> Day {i + 1}</span><small>{formatDay(d.date, { weekday: "short", day: "numeric" })}</small>
           </a>
         ))}
       </nav>
@@ -201,7 +205,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
         );
       })}
 
-      <ThemedSectionDivider label="Map & directions" />
+      <ThemedSectionDivider label="Map & directions" icon={<MapIcon size={20} aria-hidden="true" />} />
       <section className="panel" aria-label="Map">
         <div className="row tabs" role="group" aria-label="Map day">
           {trip.days.map((d, i) => <button key={d.id} className={`chip ${d.id === activeDayObj?.id ? "on" : ""}`} aria-pressed={d.id === activeDayObj?.id} onClick={() => setActiveDay(d.id)}>Day {i + 1}</button>)}
@@ -212,9 +216,10 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
             <p className="source">Map © OpenStreetMap contributors. Pins are approximate demo-catalogue positions; no route times or distances are calculated.</p>
           </>
         ) : <div className="empty small"><MapPin size={24} aria-hidden="true" /><p>No coordinates for these activities yet. Use the search links below to find them in your maps app.</p></div>}
+        <h3 className="panel-sub"><ListOrdered size={16} aria-hidden="true" /> Stops for this day</h3>
         <ol className="stops">
           {(activeDayObj?.activities ?? []).map((a, i) => (
-            <li key={a.id}><span className="stop-n">{i + 1}</span> {a.title}
+            <li key={a.id}><span className="stop-n">{i + 1}</span><ActivityCategoryIcon category={a.category} size={15} /> {a.title}
               {a.location ? <a href={services.directions.directionsUrl(a.location)} target="_blank" rel="noopener noreferrer"><ExternalLink size={14} aria-hidden="true" /> Open in Maps<span className="sr-only"> for {a.title}</span></a>
                 : <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${a.title}, ${trip.destination.name}`)}`} target="_blank" rel="noopener noreferrer"><ExternalLink size={14} aria-hidden="true" /> Search in Maps</a>}
             </li>
@@ -222,15 +227,15 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
         </ol>
       </section>
 
-      <ThemedSectionDivider label="Good to know" />
+      <ThemedSectionDivider label="Good to know" icon={<Lightbulb size={20} aria-hidden="true" />} />
       <section className="panel tips" aria-label="Travel tips">
-        <ul>{(catalog?.tips ?? ["Check official sites for opening hours and prices before you go.", "Keep a photo of your passport and booking confirmations offline.", "Learn a few words of the local language — it goes a long way."]).map((t) => <li key={t}><Lightbulb size={16} aria-hidden="true" /> {t}</li>)}</ul>
+        <ul>{(catalog?.tips ?? ["Check official sites for opening hours and prices before you go.", "Keep a photo of your passport and booking confirmations offline.", "Learn a few words of the local language — it goes a long way."]).map((t) => <li key={t}><ThemeBullet size={16} /> {t}</li>)}</ul>
         <p className="source">Tips from the Planet demo catalogue · general guidance, not live information.</p>
       </section>
 
       {!readOnly && (
         <>
-          <ThemedSectionDivider label="Share & keep" />
+          <ThemedSectionDivider label="Share & keep" icon={<Share2 size={20} aria-hidden="true" />} />
           <section className="panel share" aria-label="Sharing">
             <div className="share-col">
               <h3><Link2 size={16} aria-hidden="true" /> Local guide link</h3>
@@ -249,7 +254,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
             </div>
           </section>
           <section className="panel row between" aria-label="Revise">
-            <p className="muted">Want a fresh take? Regenerating keeps anything you&apos;ve added or edited.</p>
+            <p className="muted"><Sparkles size={16} aria-hidden="true" /> Want a fresh take? Regenerating keeps anything you&apos;ve added or edited.</p>
             {onRegenerate && <button className="btn btn-ghost" onClick={onRegenerate}><RefreshCw size={16} aria-hidden="true" /> Regenerate itinerary</button>}
           </section>
           <p className="source">Last edited {relativeTime(trip.updatedAt)} · generated by {trip.generator}</p>

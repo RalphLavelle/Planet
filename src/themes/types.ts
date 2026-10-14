@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { Destination } from "@/domain/schemas";
+import type { ActivityCategory, Destination } from "@/domain/schemas";
 
 export interface DestinationTheme {
   key: string;
@@ -20,6 +20,12 @@ export interface DestinationTheme {
   Motif: (props: { size?: number }) => ReactNode;
   /** Secondary ornament for dividers (e.g. olive sprig). */
   Sprig: (props: { size?: number }) => ReactNode;
+  /** Optional destination ornaments per activity category (decorative badges/corners). Falls back to Motif. */
+  categoryOrnaments?: Partial<Record<ActivityCategory, (props: { size?: number }) => ReactNode>>;
+  /** Optional list bullet ornament (e.g. olive leaf). Falls back to Motif. */
+  Bullet?: (props: { size?: number }) => ReactNode;
+  /** Extra decorative set used on dashboards/section headers (e.g. column, amphora, sun-over-sea). */
+  Ornaments?: ((props: { size?: number }) => ReactNode)[];
   tagline: string;
   matches: (d: Destination) => boolean;
 }

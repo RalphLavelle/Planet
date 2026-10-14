@@ -1,7 +1,12 @@
 "use client";
+import type React from "react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, RefreshCw, Sparkles } from "lucide-react";
+import { Accessibility, ArrowLeft, ArrowRight, BedDouble, CalendarCheck, CalendarDays, Check, Clock, Coins, Footprints, Gauge, Heart, ListChecks, MapPin, PiggyBank, RefreshCw, Salad, SlidersHorizontal, Sparkles, StickyNote, Users } from "lucide-react";
+import { destinationImage, placeImage } from "@/services/images";
+import { resolveDestination } from "@/services/itinerary/DemoItineraryGenerator";
+import { PhotoCredit } from "@/components/ui";
+import { CategoryOrnament } from "@/components/theme";
 import { DestinationHero, DestinationMotif, DestinationThemeProvider, ThemedSectionDivider } from "@/components/theme";
 import { ActivityCategoryIcon } from "@/components/ui";
 import { INTERESTS, PreferencesSchema, TripInputSchema, type Preferences, type Trip } from "@/domain/schemas";
@@ -67,7 +72,7 @@ export default function NewTrip() {
 
   const toggleInterest = (i: (typeof INTERESTS)[number]) => setPrefs((p) => ({ ...p, interests: p.interests.includes(i) ? p.interests.filter((x) => x !== i) : [...p.interests, i] }));
 
-  const seg = <K extends "budget" | "pace" | "walking" | "party">(k: K, label: string, options: Preferences[K][]) => (
+  const seg = <K extends "budget" | "pace" | "walking" | "party">(k: K, label: React.ReactNode, options: Preferences[K][]) => (
     <fieldset className="field">
       <legend>{label}</legend>
       <div className="seg">{options.map((o) => (
@@ -80,25 +85,26 @@ export default function NewTrip() {
     <DestinationThemeProvider destination={draft?.destination}>
       <div className="page narrow">
         <DestinationHero eyebrow={`Step ${step + 1} of 3`} title={step === 0 ? "Where are you going?" : step === 1 ? "What do you enjoy?" : `Your ${draft?.destination.name ?? ""} draft`} />
-        <ol className="steps" aria-label="Progress">{["Trip basics", "Preferences", "Preview"].map((s, i) => <li key={s} aria-current={i === step ? "step" : undefined} className={i <= step ? "done" : ""}>{s}</li>)}</ol>
+        <ol className="steps" aria-label="Progress">{([["Trip basics", MapPin], ["Preferences", SlidersHorizontal], ["Preview", ListChecks]] as const).map(([s, I], i) => <li key={s} aria-current={i === step ? "step" : undefined} className={i <= step ? "done" : ""}><I size={14} aria-hidden="true" /> {s}</li>)}</ol>
 
         {step === 0 && (
           <form className="card form" onSubmit={(e) => { e.preventDefault(); if (validateBasics()) setStep(1); }} noValidate>
             <div className="field">
-              <label htmlFor="dest">Destination <span className="req">required</span></label>
+              <label htmlFor="dest"><MapPin size={15} aria-hidden="true" /> Destination <span className="req">required</span></label>
               <input id="dest" list="dest-list" value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="e.g. Athens" aria-invalid={!!errors.destination} aria-describedby="dest-help dest-err" autoComplete="off" />
               <datalist id="dest-list">{CATALOG.map((c) => <option key={c.key} value={c.name} />)}</datalist>
               <p id="dest-help" className="help">Any city works. Athens, Rome, Paris, Istanbul and Tokyo have richer demo content; other places get a general template.</p>
               {errors.destination && <p id="dest-err" className="err">{errors.destination}</p>}
+              {(() => { const d = resolveDestination(destination || " ").destination; const img = destinationImage(d.catalogKey); return img ? <figure className="dest-preview">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={img.src} alt={d.name} /><figcaption><MapPin size={14} aria-hidden="true" /> {d.name}, {d.country}</figcaption><PhotoCredit credit={img} /></figure> : null; })()}
             </div>
             <div className="grid2">
-              <div className="field"><label htmlFor="arr">Arrival <span className="req">required</span></label><input id="arr" type="date" value={arrivalDate} onChange={(e) => setArrival(e.target.value)} aria-invalid={!!errors.arrivalDate} />{errors.arrivalDate && <p className="err">{errors.arrivalDate}</p>}</div>
-              <div className="field"><label htmlFor="dep">Departure <span className="req">required</span></label><input id="dep" type="date" value={departureDate} onChange={(e) => setDeparture(e.target.value)} aria-invalid={!!errors.departureDate} />{errors.departureDate && <p className="err" role="alert">{errors.departureDate}</p>}</div>
+              <div className="field"><label htmlFor="arr"><CalendarDays size={15} aria-hidden="true" /> Arrival <span className="req">required</span></label><input id="arr" type="date" value={arrivalDate} onChange={(e) => setArrival(e.target.value)} aria-invalid={!!errors.arrivalDate} />{errors.arrivalDate && <p className="err">{errors.arrivalDate}</p>}</div>
+              <div className="field"><label htmlFor="dep"><CalendarCheck size={15} aria-hidden="true" /> Departure <span className="req">required</span></label><input id="dep" type="date" value={departureDate} onChange={(e) => setDeparture(e.target.value)} aria-invalid={!!errors.departureDate} />{errors.departureDate && <p className="err" role="alert">{errors.departureDate}</p>}</div>
             </div>
             <div className="grid2">
-              <div className="field"><label htmlFor="cur">Your home currency <span className="req">required</span></label>
+              <div className="field"><label htmlFor="cur"><Coins size={15} aria-hidden="true" /> Your home currency <span className="req">required</span></label>
                 <select id="cur" value={nativeCurrency} onChange={(e) => setCurrency(e.target.value)}>{CURRENCIES.map((c) => <option key={c}>{c}</option>)}</select></div>
-              <div className="field"><label htmlFor="acc">Staying in (optional)</label><input id="acc" value={accommodation} onChange={(e) => setAccommodation(e.target.value)} placeholder="Neighbourhood or hotel name" maxLength={200} />
+              <div className="field"><label htmlFor="acc"><BedDouble size={15} aria-hidden="true" /> Staying in (optional)</label><input id="acc" value={accommodation} onChange={(e) => setAccommodation(e.target.value)} placeholder="Neighbourhood or hotel name" maxLength={200} />
                 <p className="help">A general area is fine. Never included in shared links unless you choose.</p></div>
             </div>
             <div className="row end"><button className="btn" type="submit">Next <ArrowRight size={18} aria-hidden="true" /></button></div>
@@ -107,18 +113,18 @@ export default function NewTrip() {
 
         {step === 1 && (
           <form className="card form" onSubmit={(e) => { e.preventDefault(); generate(); }}>
-            <fieldset className="field"><legend>Interests <span className="help-inline">(optional — pick any)</span></legend>
+            <fieldset className="field"><legend><Heart size={15} aria-hidden="true" /> Interests <span className="help-inline">(optional — pick any)</span></legend>
               <div className="chips">{INTERESTS.map((i) => <label key={i} className={`chip ${prefs.interests.includes(i) ? "on" : ""}`}><input type="checkbox" checked={prefs.interests.includes(i)} onChange={() => toggleInterest(i)} />{i}</label>)}</div>
             </fieldset>
-            {seg("budget", "Budget", ["shoestring", "moderate", "comfortable", "luxury"])}
-            {seg("pace", "Daily pace", ["relaxed", "balanced", "packed"])}
-            {seg("walking", "Walking tolerance", ["low", "medium", "high"])}
-            {seg("party", "Travelling as", ["solo", "couple", "family", "group"])}
+            {seg("budget", <><PiggyBank size={15} aria-hidden="true" /> Budget</>, ["shoestring", "moderate", "comfortable", "luxury"])}
+            {seg("pace", <><Gauge size={15} aria-hidden="true" /> Daily pace</>, ["relaxed", "balanced", "packed"])}
+            {seg("walking", <><Footprints size={15} aria-hidden="true" /> Walking tolerance</>, ["low", "medium", "high"])}
+            {seg("party", <><Users size={15} aria-hidden="true" /> Travelling as</>, ["solo", "couple", "family", "group"])}
             <div className="grid2">
-              <div className="field"><label htmlFor="diet">Dietary needs</label><input id="diet" value={prefs.dietary} maxLength={200} onChange={(e) => setPrefs({ ...prefs, dietary: e.target.value })} placeholder="e.g. vegetarian" /></div>
-              <div className="field"><label htmlFor="access">Accessibility</label><input id="access" value={prefs.accessibility} maxLength={200} onChange={(e) => setPrefs({ ...prefs, accessibility: e.target.value })} placeholder="e.g. step-free routes" /></div>
+              <div className="field"><label htmlFor="diet"><Salad size={15} aria-hidden="true" /> Dietary needs</label><input id="diet" value={prefs.dietary} maxLength={200} onChange={(e) => setPrefs({ ...prefs, dietary: e.target.value })} placeholder="e.g. vegetarian" /></div>
+              <div className="field"><label htmlFor="access"><Accessibility size={15} aria-hidden="true" /> Accessibility</label><input id="access" value={prefs.accessibility} maxLength={200} onChange={(e) => setPrefs({ ...prefs, accessibility: e.target.value })} placeholder="e.g. step-free routes" /></div>
             </div>
-            <div className="field"><label htmlFor="notes">Anything else?</label><textarea id="notes" rows={3} maxLength={1000} value={prefs.notes} onChange={(e) => setPrefs({ ...prefs, notes: e.target.value })} /></div>
+            <div className="field"><label htmlFor="notes"><StickyNote size={15} aria-hidden="true" /> Anything else?</label><textarea id="notes" rows={3} maxLength={1000} value={prefs.notes} onChange={(e) => setPrefs({ ...prefs, notes: e.target.value })} /></div>
             <div className="row between">
               <button type="button" className="btn btn-ghost" onClick={() => setStep(0)}><ArrowLeft size={18} aria-hidden="true" /> Back</button>
               <button className="btn" type="submit" disabled={busy}><Sparkles size={18} aria-hidden="true" /> {busy ? "Drafting…" : "Generate itinerary"}</button>
@@ -132,7 +138,7 @@ export default function NewTrip() {
             {draft.days.map((d) => (
               <article key={d.id} className="card preview-day">
                 <h3><DestinationMotif size={18} /> {formatDay(d.date)} <span className="muted">· {d.title}</span></h3>
-                <ul className="preview-list">{d.activities.map((a) => <li key={a.id}><span className="time">{a.startTime}</span><ActivityCategoryIcon category={a.category} /> {a.title}</li>)}</ul>
+                <ul className="preview-list">{d.activities.map((a) => { const img = placeImage(a.placeId); return <li key={a.id}><span className="time"><Clock size={12} aria-hidden="true" /> {a.startTime}</span>{img ? /* eslint-disable-next-line @next/next/no-img-element */ <img className="mini-thumb" src={img.src} alt="" loading="lazy" /> : <span className="mini-thumb mini-fallback"><CategoryOrnament category={a.category} size={22} /></span>}<ActivityCategoryIcon category={a.category} /> {a.title}</li>; })}</ul>
               </article>
             ))}
             <ThemedSectionDivider />

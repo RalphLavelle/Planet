@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="topbar-links"><Link href="/import">Import</Link><Link href="/new" className="btn btn-small">New trip</Link></div>
         </nav>
         <main id="main">{children}</main>
-        <footer className="footer"><p>Planet MVP · trips are stored only in this browser. Content marked “Demo data” is illustrative, not verified.</p></footer>
+        <footer className="footer"><p>Planet MVP · trips are stored only in this browser. Content marked “Demo data” is illustrative, not verified. · <Link href="/credits">Photo credits</Link></p></footer>
       </body>
     </html>
   );

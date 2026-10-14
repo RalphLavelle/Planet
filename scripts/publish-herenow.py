@@ -13,7 +13,10 @@ for d, _, fs in os.walk(ROOT):
 def call(url, body, method="POST"):
     r = urllib.request.Request(url, data=json.dumps(body).encode(), headers=H, method=method)
     return json.load(urllib.request.urlopen(r))
-res = call("https://here.now/api/v1/publish", {"files": files})
+# Update an existing anonymous site if HERENOW_SLUG + HERENOW_CLAIM_TOKEN are set; otherwise create a new one.
+slug, tok = os.environ.get("HERENOW_SLUG"), os.environ.get("HERENOW_CLAIM_TOKEN")
+res = call(f"https://here.now/api/v1/publish/{slug}", {"files": files, "claimToken": tok}, "PUT") if slug and tok else call("https://here.now/api/v1/publish", {"files": files})
+res.setdefault("slug", slug)
 up = res["upload"]
 for u in up["uploads"]:
     data = open(os.path.join(ROOT, u["path"]), "rb").read()

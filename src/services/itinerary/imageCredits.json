@@ -1,0 +1,426 @@
+{
+ "athens:hero": {
+  "src": "/images/places/athens-hero.jpg",
+  "title": "1029_Acropolis_of_Athens_in_Greece_at_night_Photo_by_Giles_Laurent.jpg",
+  "author": "Giles Laurent",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:1029_Acropolis_of_Athens_in_Greece_at_night_Photo_by_Giles_Laurent.jpg"
+ },
+ "athens:acropolis": {
+  "src": "/images/places/athens-acropolis.jpg",
+  "title": "The_Parthenon_in_Athens.jpg",
+  "author": "Steve Swayne",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:The_Parthenon_in_Athens.jpg"
+ },
+ "athens:acropolis-museum": {
+  "src": "/images/places/athens-acropolis-museum.jpg",
+  "title": "Pensive Athena in Acropolis Museum 2024 Isolated.png",
+  "author": "Nikos Kitsakis",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pensive_Athena_in_Acropolis_Museum_2024_Isolated.png"
+ },
+ "athens:ancient-agora": {
+  "src": "/images/places/athens-ancient-agora.jpg",
+  "title": "Temple_of_Hephaestus_viewed_from_the_Stoa_of_Attalos_in_Athens,_Greece.jpg",
+  "author": "Julian Lupyan",
+  "license": "CC0",
+  "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Temple_of_Hephaestus_viewed_from_the_Stoa_of_Attalos_in_Athens,_Greece.jpg"
+ },
+ "athens:plaka": {
+  "src": "/images/places/athens-plaka.jpg",
+  "title": "Anafiotika.JPG",
+  "author": "Antonio Fajardo i López",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Anafiotika.JPG"
+ },
+ "athens:national-archaeological": {
+  "src": "/images/places/athens-national-archaeological.jpg",
+  "title": "Archäologisches_Nationalmuseum_Athen.jpg",
+  "author": "Thomas Wolf, www.foto-tw.de",
+  "license": "CC BY-SA 3.0 de",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/de/deed.en",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Arch%C3%A4ologisches_Nationalmuseum_Athen.jpg"
+ },
+ "athens:lycabettus": {
+  "src": "/images/places/athens-lycabettus.jpg",
+  "title": "Λυκαβηττός_-_Mount_Lycabettus.jpg",
+  "author": "Apaleutos25",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:%CE%9B%CF%85%CE%BA%CE%B1%CE%B2%CE%B7%CF%84%CF%84%CF%8C%CF%82_-_Mount_Lycabettus.jpg"
+ },
+ "athens:philopappos": {
+  "src": "/images/places/athens-philopappos.jpg",
+  "title": "Philopappos_monument.jpg",
+  "author": "Calidius",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Philopappos_monument.jpg"
+ },
+ "athens:temple-zeus": {
+  "src": "/images/places/athens-temple-zeus.jpg",
+  "title": "L'Olympieion_(Athènes)_(30776483926).jpg",
+  "author": "Jean-Pierre Dalbéra from Paris, France",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:L%27Olympieion_(Ath%C3%A8nes)_(30776483926).jpg"
+ },
+ "athens:panathenaic": {
+  "src": "/images/places/athens-panathenaic.jpg",
+  "title": "Panathenaic_Stadium_-_panoramio_(1).jpg",
+  "author": "Mister No",
+  "license": "CC BY 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Panathenaic_Stadium_-_panoramio_(1).jpg"
+ },
+ "athens:national-garden": {
+  "src": "/images/places/athens-national-garden.jpg",
+  "title": "Εθνικός_Κήπος.jpg",
+  "author": "Apaleutos25",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:%CE%95%CE%B8%CE%BD%CE%B9%CE%BA%CF%8C%CF%82_%CE%9A%CE%AE%CF%80%CE%BF%CF%82.jpg"
+ },
+ "athens:benaki": {
+  "src": "/images/places/athens-benaki.jpg",
+  "title": "Benaki_Museum_Athens.JPG",
+  "author": "Dimboukas",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Benaki_Museum_Athens.JPG"
+ },
+ "athens:cycladic": {
+  "src": "/images/places/athens-cycladic.jpg",
+  "title": "Cycladic_idol_02.JPG",
+  "author": "sailko",
+  "license": "CC BY 2.5",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.5",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cycladic_idol_02.JPG"
+ },
+ "athens:monastiraki": {
+  "src": "/images/places/athens-monastiraki.jpg",
+  "title": "Monastiraki_Square_on_June_6,_2020.jpg",
+  "author": "George E. Koronaios",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Monastiraki_Square_on_June_6,_2020.jpg"
+ },
+ "athens:psyrri": {
+  "src": "/images/places/athens-psyrri.jpg",
+  "title": "Petra_metzes.jpg",
+  "author": "Unai Guerra",
+  "license": "CC BY-SA 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Petra_metzes.jpg"
+ },
+ "athens:souvlaki": {
+  "src": "/images/places/athens-souvlaki.jpg",
+  "title": "Ελληνικό_Σουβλάκι_-_panoramio.jpg",
+  "author": "EntaXoyas",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:%CE%95%CE%BB%CE%BB%CE%B7%CE%BD%CE%B9%CE%BA%CF%8C_%CE%A3%CE%BF%CF%85%CE%B2%CE%BB%CE%AC%CE%BA%CE%B9_-_panoramio.jpg"
+ },
+ "athens:koukaki": {
+  "src": "/images/places/athens-koukaki.jpg",
+  "title": "MussakasMeMelitsanesKePatates01.JPG",
+  "author": "Robert Kindermann aka RobertK",
+  "license": "CC BY-SA 2.5",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:MussakasMeMelitsanesKePatates01.JPG"
+ },
+ "athens:rooftop": {
+  "src": "/images/places/athens-rooftop.jpg",
+  "title": "Carrer_del_barri_de_Plaka,_Atenes.JPG",
+  "author": "Joanbanjo",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Carrer_del_barri_de_Plaka,_Atenes.JPG"
+ },
+ "athens:gazi": {
+  "src": "/images/places/athens-gazi.jpg",
+  "title": "Arxitektoniki-gazi.jpg",
+  "author": "Dimorsitanos",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Arxitektoniki-gazi.jpg"
+ },
+ "athens:cape-sounion": {
+  "src": "/images/places/athens-cape-sounion.jpg",
+  "title": "Greece_Cape_Sounion_BW_2017-10-09_10-12-43.jpg",
+  "author": "Berthold Werner",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Greece_Cape_Sounion_BW_2017-10-09_10-12-43.jpg"
+ },
+ "rome:hero": {
+  "src": "/images/places/rome-hero.jpg",
+  "title": "Colosseo_2020.jpg",
+  "author": "FeaturedPics",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Colosseo_2020.jpg"
+ },
+ "rome:colosseum": {
+  "src": "/images/places/rome-colosseum.jpg",
+  "title": "Colosseo_2020.jpg",
+  "author": "FeaturedPics",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Colosseo_2020.jpg"
+ },
+ "rome:vatican": {
+  "src": "/images/places/rome-vatican.jpg",
+  "title": "Sistine_Chapel_ceiling_02_(brightened).jpg",
+  "author": "Antoine Taveneaux",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Sistine_Chapel_ceiling_02_(brightened).jpg"
+ },
+ "rome:pantheon": {
+  "src": "/images/places/rome-pantheon.jpg",
+  "title": "Pantheon_(Rome)_-_Right_side_and_front.jpg",
+  "author": "NikonZ7II",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pantheon_(Rome)_-_Right_side_and_front.jpg"
+ },
+ "rome:trastevere": {
+  "src": "/images/places/rome-trastevere.jpg",
+  "title": "Santa_Maria_in_Trastevere_fountain.jpg",
+  "author": "Jensens",
+  "license": "Public domain",
+  "licenseUrl": "",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Santa_Maria_in_Trastevere_fountain.jpg"
+ },
+ "rome:campo": {
+  "src": "/images/places/rome-campo.jpg",
+  "title": "Campo_dei_Fiori.jpg",
+  "author": "Myrabella",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Campo_dei_Fiori.jpg"
+ },
+ "rome:borghese": {
+  "src": "/images/places/rome-borghese.jpg",
+  "title": "Galleria_Borghese_-_logo_(Italy,_2022-).svg",
+  "author": "Studio Lorenzo Marini Group",
+  "license": "Public domain",
+  "licenseUrl": "",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Galleria_Borghese_-_logo_(Italy,_2022-).svg"
+ },
+ "rome:trevi": {
+  "src": "/images/places/rome-trevi.jpg",
+  "title": "Trevi_Fountain_-_Roma.jpg",
+  "author": "NikonZ7II",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Trevi_Fountain_-_Roma.jpg"
+ },
+ "rome:aperitivo": {
+  "src": "/images/places/rome-aperitivo.jpg",
+  "title": "Rome_via_dei_fori_imperiali_20050922.jpg",
+  "author": "Alessio Damato",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Rome_via_dei_fori_imperiali_20050922.jpg"
+ },
+ "paris:hero": {
+  "src": "/images/places/paris-hero.jpg",
+  "title": "Tour_Eiffel_Wikimedia_Commons_(cropped).jpg",
+  "author": "Benh LIEU SONG",
+  "license": "Public domain",
+  "licenseUrl": "",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tour_Eiffel_Wikimedia_Commons_(cropped).jpg"
+ },
+ "paris:louvre": {
+  "src": "/images/places/paris-louvre.jpg",
+  "title": "Louvre_Museum_Wikimedia_Commons.jpg",
+  "author": "Benh LIEU SONG (Flickr)",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Louvre_Museum_Wikimedia_Commons.jpg"
+ },
+ "paris:marais": {
+  "src": "/images/places/paris-marais.jpg",
+  "title": "Paris_Hotel_de_Sens_dsc04028.jpg",
+  "author": "Unknown",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Paris_Hotel_de_Sens_dsc04028.jpg"
+ },
+ "paris:eiffel": {
+  "src": "/images/places/paris-eiffel.jpg",
+  "title": "Tour_Eiffel_Wikimedia_Commons_(cropped).jpg",
+  "author": "Benh LIEU SONG",
+  "license": "Public domain",
+  "licenseUrl": "",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tour_Eiffel_Wikimedia_Commons_(cropped).jpg"
+ },
+ "paris:bistro": {
+  "src": "/images/places/paris-bistro.jpg",
+  "title": "Jean_Béraud_Au_Bistro.jpg",
+  "author": "Jean Béraud",
+  "license": "Public domain",
+  "licenseUrl": "",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Jean_B%C3%A9raud_Au_Bistro.jpg"
+ },
+ "paris:marche": {
+  "src": "/images/places/paris-marche.jpg",
+  "title": "Marché_des_Enfants-Rouges,_Paris_May_2016.jpg",
+  "author": "besopha",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:March%C3%A9_des_Enfants-Rouges,_Paris_May_2016.jpg"
+ },
+ "paris:montmartre": {
+  "src": "/images/places/paris-montmartre.jpg",
+  "title": "Le_sacre_coeur.jpg",
+  "author": "Tonchino",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Le_sacre_coeur.jpg"
+ },
+ "paris:luxembourg": {
+  "src": "/images/places/paris-luxembourg.jpg",
+  "title": "LuxembourgMontparnasse.JPG",
+  "author": "Kirua",
+  "license": "Public domain",
+  "licenseUrl": "",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:LuxembourgMontparnasse.JPG"
+ },
+ "istanbul:hero": {
+  "src": "/images/places/istanbul-hero.jpg",
+  "title": "Hagia_Sophia_(228968325).jpeg",
+  "author": "Adli Wahid",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hagia_Sophia_(228968325).jpeg"
+ },
+ "istanbul:hagia-sophia": {
+  "src": "/images/places/istanbul-hagia-sophia.jpg",
+  "title": "Hagia_Sophia_(228968325).jpeg",
+  "author": "Adli Wahid",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hagia_Sophia_(228968325).jpeg"
+ },
+ "istanbul:topkapi": {
+  "src": "/images/places/istanbul-topkapi.jpg",
+  "title": "Topkapı_-_01.jpg",
+  "author": "Carlos Delgado",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Topkap%C4%B1_-_01.jpg"
+ },
+ "istanbul:blue-mosque": {
+  "src": "/images/places/istanbul-blue-mosque.jpg",
+  "title": "Istanbul_(34223582516)_(cropped).jpg",
+  "author": "Pedro Szekely from Los Angeles, USA",
+  "license": "CC BY-SA 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Istanbul_(34223582516)_(cropped).jpg"
+ },
+ "istanbul:ferry": {
+  "src": "/images/places/istanbul-ferry.jpg",
+  "title": "Turkish_Strait_disambig.svg",
+  "author": "User:Interiot",
+  "license": "CC BY-SA 2.5",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Turkish_Strait_disambig.svg"
+ },
+ "istanbul:kadikoy": {
+  "src": "/images/places/istanbul-kadikoy.jpg",
+  "title": "Haydarpasa_train_station_(cropped).jpg",
+  "author": "Starliner",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Haydarpasa_train_station_(cropped).jpg"
+ },
+ "istanbul:karakoy": {
+  "src": "/images/places/istanbul-karakoy.jpg",
+  "title": "Mehanadance.JPG",
+  "author": "No machine-readable author provided. Preslav~commonswiki assumed (based on copyright claims).",
+  "license": "Public domain",
+  "licenseUrl": "",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Mehanadance.JPG"
+ },
+ "istanbul:galata": {
+  "src": "/images/places/istanbul-galata.jpg",
+  "title": "Galata_tower_01_23.jpg",
+  "author": "GrandEscogriffe",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Galata_tower_01_23.jpg"
+ },
+ "tokyo:hero": {
+  "src": "/images/places/tokyo-hero.jpg",
+  "title": "Tokyo_Skytree_2014_Ⅲ.jpg",
+  "author": "Kakidai",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tokyo_Skytree_2014_%E2%85%A2.jpg"
+ },
+ "tokyo:sensoji": {
+  "src": "/images/places/tokyo-sensoji.jpg",
+  "title": "Sensoji_2023.jpg",
+  "author": "Akonnchiroll",
+  "license": "CC0",
+  "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Sensoji_2023.jpg"
+ },
+ "tokyo:meiji": {
+  "src": "/images/places/tokyo-meiji.jpg",
+  "title": "Meiji_Jingu_2023-3.jpg",
+  "author": "Akonnchiroll",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Meiji_Jingu_2023-3.jpg"
+ },
+ "tokyo:tsukiji": {
+  "src": "/images/places/tokyo-tsukiji.jpg",
+  "title": "2018_Tsukiji_fish_market.jpg",
+  "author": "Kakidai",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:2018_Tsukiji_fish_market.jpg"
+ },
+ "tokyo:izakaya": {
+  "src": "/images/places/tokyo-izakaya.jpg",
+  "title": "Izakaya_Exterior_Gotanda.jpg",
+  "author": "Japanexperterna.se",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Izakaya_Exterior_Gotanda.jpg"
+ },
+ "tokyo:shibuya": {
+  "src": "/images/places/tokyo-shibuya.jpg",
+  "title": "Shibuya_Crossing,_Aerial.jpg",
+  "author": "David Kernan",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Shibuya_Crossing,_Aerial.jpg"
+ },
+ "tokyo:nakameguro": {
+  "src": "/images/places/tokyo-nakameguro.jpg",
+  "title": "YutenjiHatsumoude.jpg",
+  "author": "Akihabara",
+  "license": "Public domain",
+  "licenseUrl": "",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:YutenjiHatsumoude.jpg"
+ },
+ "tokyo:golden-gai": {
+  "src": "/images/places/tokyo-golden-gai.jpg",
+  "title": "G2_Street_20090626_2.jpg",
+  "author": "urbz",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:G2_Street_20090626_2.jpg"
+ }
+}

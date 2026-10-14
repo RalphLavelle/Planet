@@ -1,6 +1,9 @@
 "use client";
+import { useState } from "react";
+import { placeImage, type ImageCredit } from "@/services/images";
+import { CategoryOrnament } from "./theme";
 import {
-  Bed, Coffee, Footprints, Landmark, Martini, Mountain, Palmtree, PenLine, ShoppingBag, Sparkles, TrainFront, Trees, UtensilsCrossed,
+  Bed, Camera, Coffee, Footprints, Landmark, Martini, Mountain, Palmtree, PenLine, ShoppingBag, Sparkles, TrainFront, Trees, UtensilsCrossed,
   type LucideIcon,
 } from "lucide-react";
 import type { ActivityCategory, DataStatus } from "@/domain/schemas";
@@ -29,17 +32,29 @@ export function StatusBadge({ status, at, stale }: { status: DataStatus; at?: st
   );
 }
 
-/** Image slot: resolves imageRef via a configurable source; falls back to a themed illustrated placeholder. */
-export function ActivityThumb({ category, imageRef, alt }: { category: ActivityCategory; imageRef?: string; alt: string }) {
-  const base = process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
-  const src = base && imageRef && !imageRef.startsWith("category:") ? `${base}/${encodeURIComponent(imageRef)}` : null;
+/** Small attribution line for a licensed photo. */
+export function PhotoCredit({ credit }: { credit: ImageCredit }) {
   return (
-    <div className={`thumb thumb-${category}`}>
-      {src ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt={alt} onError={(e) => { e.currentTarget.style.display = "none"; }} />
+    <a className="photo-credit" href={credit.sourceUrl} target="_blank" rel="noopener noreferrer" title={`${credit.title} — ${credit.author}, ${credit.license}`}>
+      <Camera size={10} aria-hidden="true" /> {credit.author.slice(0, 32)} · {credit.license}<span className="sr-only"> (photo source on Wikimedia Commons)</span>
+    </a>
+  );
+}
+
+/** Image slot: licensed photo when available (via services/images), otherwise a themed illustrated placeholder. */
+export function ActivityThumb({ category, placeId, alt }: { category: ActivityCategory; placeId?: string; imageRef?: string; alt: string }) {
+  const credit = placeImage(placeId);
+  const [failed, setFailed] = useState(false);
+  return (
+    <div className={`thumb thumb-${category}${credit && !failed ? " thumb-photo" : ""}`}>
+      {credit && !failed ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={credit.src} alt={alt} loading="lazy" onError={() => setFailed(true)} />
+          <PhotoCredit credit={credit} />
+        </>
       ) : (
-        <span className="thumb-icon"><ActivityCategoryIcon category={category} size={30} /></span>
+        <span className="thumb-fallback"><CategoryOrnament category={category} size={44} /><span className="thumb-icon-small"><ActivityCategoryIcon category={category} size={14} /></span></span>
       )}
     </div>
   );

@@ -34,7 +34,7 @@ await page.getByRole("button", { name: "Generate itinerary" }).click();
 await page.getByRole("button", { name: "Save my guide" }).waitFor();
 await page.screenshot({ path: out("04-wizard-preview"), fullPage: true });
 await page.getByRole("button", { name: "Save my guide" }).click();
-await page.waitForURL(/\/trip\//);
+await page.waitForURL(/\/trip\/?\?id=/);
 await page.getByRole("heading", { name: "Athens", level: 1 }).waitFor();
 await page.waitForTimeout(2500); // weather fetch
 const tripUrl = page.url().replace("&created=1", "");
@@ -104,7 +104,7 @@ await p2.goto(tripUrl); await p2.getByText("Guide not found in this browser").wa
 log("local link on another browser explains limitation");
 await p2.screenshot({ path: out("11-local-link-other-device") });
 await p2.goto(link); await p2.getByRole("button", { name: "Save a copy to this browser" }).click();
-await p2.waitForURL(/\/trip\//); log("import snapshot into another browser");
+await p2.waitForURL(/\/trip\/?\?id=/); log("import snapshot into another browser");
 await p2.goto(BASE + "/shared#garbage!!"); await p2.getByText("Can't open this shared guide").waitFor(); log("invalid snapshot rejected");
 
 // Neutral fallback destination
@@ -114,7 +114,7 @@ await page.selectOption("#cur", "EUR");
 await page.getByRole("button", { name: "Next" }).click();
 await page.getByRole("button", { name: "Generate itinerary" }).click();
 await page.getByRole("button", { name: "Save my guide" }).click();
-await page.waitForURL(/\/trip\//); await page.waitForTimeout(1500);
+await page.waitForURL(/\/trip\/?\?id=/); await page.waitForTimeout(1500);
 assert((await page.locator(".themed").getAttribute("data-theme")) === "neutral", "unknown destination gets neutral theme");
 await page.screenshot({ path: out("12-guide-neutral-fallback"), fullPage: false });
 
@@ -124,7 +124,7 @@ await page.fill("#dest", "Istanbul"); await page.fill("#arr", "2026-10-20"); awa
 await page.getByRole("button", { name: "Next" }).click();
 await page.getByRole("button", { name: "Generate itinerary" }).click();
 await page.getByRole("button", { name: "Save my guide" }).click();
-await page.waitForURL(/\/trip\//); await page.waitForTimeout(2500);
+await page.waitForURL(/\/trip\/?\?id=/); await page.waitForTimeout(2500);
 assert((await page.locator(".themed").getAttribute("data-theme")) === "istanbul", "Istanbul theme");
 await page.screenshot({ path: out("13-guide-istanbul"), fullPage: false });
 
@@ -136,7 +136,7 @@ const m = await browser.newContext({ viewport: { width: 390, height: 844 }, devi
 await m.addInitScript(() => {});
 const mp = await m.newPage();
 await mp.goto(link); await mp.getByText("read-only snapshot").waitFor(); await mp.getByRole("button", { name: "Save a copy to this browser" }).click();
-await mp.waitForURL(/\/trip\//); await mp.waitForTimeout(2000);
+await mp.waitForURL(/\/trip\/?\?id=/); await mp.waitForTimeout(2000);
 await mp.screenshot({ path: out("15-mobile-guide-hero") });
 await mp.locator(".day").nth(1).scrollIntoViewIfNeeded(); await mp.waitForTimeout(300);
 await mp.screenshot({ path: out("16-mobile-day") });
