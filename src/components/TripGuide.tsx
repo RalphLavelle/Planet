@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowDown, ArrowUp, CalendarDays, Clock, Droplets, Hourglass, Home, Map as MapIcon, Share2, Trees, Sparkles, ListOrdered, CloudRain, CloudSun, Copy, Download, ExternalLink, Lightbulb, Link2, MapPin, Navigation, Pencil, Plus,
+  ArrowDown, ArrowUp, CalendarDays, ChevronsDownUp, ChevronsUpDown, Clock, Droplets, Hourglass, Home, Map as MapIcon, Share2, Trees, Sparkles, ListOrdered, CloudRain, CloudSun, Copy, Download, ExternalLink, Lightbulb, Link2, MapPin, Navigation, Pencil, Plus,
   RefreshCw, Sun, Thermometer, Trash2, Wallet,
 } from "lucide-react";
 import type { Activity, ItineraryDay, Trip } from "@/domain/schemas";
@@ -15,6 +15,9 @@ import * as edit from "@/services/editing";
 import { CategoryOrnament, DestinationHero, DestinationMotif, OrnamentRow, ThemeBullet, ThemedSectionDivider, useDestinationTheme } from "./theme";
 import { destinationImage } from "@/services/images";
 import { FlightCard } from "./FlightCard";
+import { DayHeader, dayBannerPhotos } from "./DayHeader";
+import { PhotoMosaic } from "./PhotoMosaic";
+import { displayDayTitle } from "@/domain/dayTitles";
 import { MiniMap } from "./MiniMap";
 import type { GeoPoint } from "@/domain/schemas";
 import { ActivityCategoryIcon, ActivityThumb, CATEGORY_LABEL, PhotoCredit, StatusBadge } from "./ui";
@@ -66,6 +69,13 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
   const [includeFlights, setIncludeFlights] = useState(false);
   const [flightsChanged, setFlightsChanged] = useState(false);
   const [base, setBase] = useState<GeoPoint | null>(null);
+  const [collapsed, setCollapsed] = useState<string[]>([]);
+  useEffect(() => { services.uiPrefs.getCollapsedDays(trip.id).then(setCollapsed); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trip.id]);
+  const isCollapsed = (id: string) => collapsed.includes(id);
+  const persistCollapsed = (ids: string[]) => { setCollapsed(ids); services.uiPrefs.setCollapsedDays(trip.id, ids); };
+  const toggleDay = (id: string) => persistCollapsed(isCollapsed(id) ? collapsed.filter((x) => x !== id) : [...collapsed, id]);
+  const setCollapsedAll = (all: boolean) => persistCollapsed(all ? trip.days.map((d) => d.id) : []);
   useEffect(() => {
     let live = true;
     if (!trip.accommodation) { setBase(null); return; }
@@ -74,6 +84,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip.accommodation, trip.destination.name]);
   const [copied, setCopied] = useState("");
+  const banners = dayBannerPhotos(trip.days);
   const heroPhoto = destinationImage(trip.destination.catalogKey);
   const catalog = trip.destination.catalogKey ? findCatalogDestination(trip.destination.catalogKey) : undefined;
 
@@ -175,6 +186,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
         </ul>
         <OrnamentRow />
       </DestinationHero>
+      <PhotoMosaic catalogKey={trip.destination.catalogKey} name={trip.destination.name} />
 
       <section className="panel weather" aria-labelledby="wx-h">
         <div className="panel-head">
@@ -193,24 +205,29 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
 
       <nav className="day-nav" aria-label="Days">
         {trip.days.map((d, i) => (
-          <a key={d.id} href={`#day-${d.id}`} className={d.id === activeDay ? "on" : ""} onClick={() => setActiveDay(d.id)}>
+          <a key={d.id} href={`#day-${d.id}`} className={d.id === activeDay ? "on" : ""} onClick={() => { setActiveDay(d.id); if (isCollapsed(d.id)) toggleDay(d.id); }}>
             <span className="day-nav-motif"><DestinationMotif size={14} /></span><span className="day-nav-title"><CalendarDays size={13} aria-hidden="true" /> Day {i + 1}</span><small>{formatDay(d.date, { weekday: "short", day: "numeric" })}</small>
           </a>
         ))}
       </nav>
+      <div className="row between day-controls">
+        <p className="muted small-print"><DestinationMotif size={14} /> {trip.days.length} days · {trip.days.reduce((n, d) => n + d.activities.length, 0)} stops</p>
+        <div className="row">
+          <button className="btn btn-ghost btn-small" onClick={() => setCollapsedAll(false)} disabled={collapsed.length === 0}><ChevronsUpDown size={14} aria-hidden="true" /> Expand all</button>
+          <button className="btn btn-ghost btn-small" onClick={() => setCollapsedAll(true)} disabled={collapsed.length === trip.days.length}><ChevronsDownUp size={14} aria-hidden="true" /> Collapse all</button>
+        </div>
+      </div>
 
       {trip.days.map((day, i) => {
         const w = weatherByDate.get(day.date);
         return (
-          <section key={day.id} id={`day-${day.id}`} className="day" aria-labelledby={`h-${day.id}`}>
-            <header className="day-head">
-              <span className="day-num" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
-              <div>
-                <p className="eyebrow">{formatDay(day.date)}{w ? <> · <WeatherIcon code={w.code} /> {Math.round(w.tempMaxC)}° {w.summary}</> : null}</p>
-                <h3 id={`h-${day.id}`}>{day.title || `Day ${i + 1}`}</h3>
-              </div>
-              <span className="day-motif"><DestinationMotif size={34} /></span>
-            </header>
+          <section key={day.id} id={`day-${day.id}`} className={`day${isCollapsed(day.id) ? " collapsed" : ""}`} aria-labelledby={`h-${day.id}`}>
+            <DayHeader day={day} index={i} photo={banners[i]} title={displayDayTitle(trip, i)} collapsed={isCollapsed(day.id)} readOnly={readOnly}
+              weather={w ? <> · <WeatherIcon code={w.code} /> {Math.round(w.tempMaxC)}° {w.summary}</> : null}
+              onToggle={() => toggleDay(day.id)}
+              onRename={(t) => apply(edit.renameDay(trip, day.id, t), t.trim() ? `Renamed day ${i + 1}` : `Day ${i + 1} title reset`)}
+              onReset={() => apply(edit.resetDayTitle(trip, day.id), `Day ${i + 1} title reset to automatic`)} />
+            <div id={`day-body-${day.id}`} className="day-body" hidden={isCollapsed(day.id)}>
             {i === 0 && <FlightCard kind="arrival" flight={trip.flights.arrival} readOnly={readOnly} onSave={(f) => { apply(edit.updateFlights(trip, { ...trip.flights, arrival: f }), "Updated arrival flight"); setFlightsChanged(true); }} />}
             {i === 0 && flightsChanged && !readOnly && <p className="notice notice-warn">Flight times changed. Your plans haven&apos;t been moved. {onRegenerate && <button className="btn btn-small btn-ghost" onClick={() => { setFlightsChanged(false); onRegenerate(); }}>Refit itinerary to flights</button>}</p>}
             {day.activities.length === 0 ? (
@@ -218,12 +235,14 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
             ) : <ol className="activities">{day.activities.map((a, idx) => renderActivity(day, a, idx))}</ol>}
             {i === trip.days.length - 1 && <FlightCard kind="departure" flight={trip.flights.departure} readOnly={readOnly} onSave={(f) => { apply(edit.updateFlights(trip, { ...trip.flights, departure: f }), "Updated departure flight"); setFlightsChanged(true); }} />}
             {!readOnly && <AddActivity onAdd={(v) => apply(edit.addActivity(trip, day.id, v), `Added “${v.title}”`)} />}
+            </div>
           </section>
         );
       })}
 
       <ThemedSectionDivider label="Map & directions" icon={<MapIcon size={20} aria-hidden="true" />} />
-      <section className="panel" aria-label="Map">
+      <section className="panel map-panel" aria-label="Map">
+        <div className="map-header" aria-hidden="true"><theme.HeroArt /></div>
         <div className="row tabs" role="group" aria-label="Map day">
           {trip.days.map((d, i) => <button key={d.id} className={`chip ${d.id === activeDayObj?.id ? "on" : ""}`} aria-pressed={d.id === activeDayObj?.id} onClick={() => setActiveDay(d.id)}>Day {i + 1}</button>)}
         </div>

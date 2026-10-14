@@ -105,6 +105,12 @@ assert(all.includes("Edited: morning at the museum") && all.includes("Pick up fe
 await page.goto(tripUrl); await page.getByRole("heading", { name: "Athens", level: 1 }).waitFor();
 const all2 = await page.locator(".activity h4").allInnerTexts();
 assert(all2.includes("Pick up ferry tickets") && all2.includes("Edited: morning at the museum"), "edits persist across reload");
+await page.getByRole("button", { name: "Collapse all" }).click();
+await page.locator(".day-controls").scrollIntoViewIfNeeded(); await page.waitForTimeout(1000);
+await page.screenshot({ path: out("06b-athens-collapsed") });
+await page.getByRole("button", { name: "Expand all" }).click();
+await page.locator(".day-banner").nth(1).scrollIntoViewIfNeeded(); await page.waitForTimeout(1000);
+await page.locator(".day").nth(1).screenshot({ path: out("06c-athens-day-expanded") });
 await page.locator("text=Map & directions").scrollIntoViewIfNeeded();
 await page.waitForTimeout(1500);
 await page.locator(".divider", { hasText: "Map & directions" }).screenshot({ path: out("tmp") }).catch(() => {});
@@ -149,7 +155,51 @@ await page.getByRole("button", { name: "Save my guide" }).click();
 await page.waitForURL(/\/trip\/?\?id=/); await page.waitForTimeout(2500);
 assert((await page.locator(".themed").getAttribute("data-theme")) === "istanbul", "Istanbul theme");
 await page.screenshot({ path: out("13-guide-istanbul"), fullPage: false });
+// Day-title bug: moving the lead activity must recompute the old day's auto title
+const iday2 = page.locator(".day").nth(1);
+const t2before = await iday2.locator(".day-title").innerText();
+const lead = t2before.replace(/^Day 2:\s*/, "").split("\n")[0].trim();
+const leadFull = (await iday2.locator(".activity h4").allInnerTexts()).find((t) => t.startsWith(lead));
+await iday2.getByRole("combobox", { name: `Move ${leadFull} to another day` }).selectOption({ index: 1 });
+const t2after = await iday2.locator(".day-title").innerText();
+assert(!t2after.includes(lead) && /^Day 2: /.test(t2after), `auto title recomputed after move ("${t2before.split("\n")[0]}" → "${t2after.split("\n")[0]}")`);
+// Inline rename + reset
+await iday2.getByRole("button", { name: "Rename day 2" }).click();
+await page.fill(`#${await iday2.locator("input[id^=title-]").getAttribute("id")}`, "Bazaars & Bosphorus");
+await page.keyboard.press("Enter");
+assert((await iday2.locator(".day-title").innerText()).startsWith("Bazaars & Bosphorus"), "inline day title edit");
+await page.reload(); await page.locator(".day").first().waitFor();
+assert((await page.locator(".day").nth(1).locator(".day-title").innerText()).startsWith("Bazaars & Bosphorus"), "custom title persists");
+await page.waitForTimeout(1500);
+await page.locator(".day").nth(1).scrollIntoViewIfNeeded();
+await page.screenshot({ path: out("13b-istanbul-day-expanded") });
+await page.locator(".day").nth(1).getByRole("button", { name: "Auto title" }).click();
+assert(/^Day 2: /.test(await page.locator(".day").nth(1).locator(".day-title").innerText()), "reset to auto title");
+// Collapse all (keyboard) + persistence
+await page.getByRole("button", { name: "Collapse all" }).focus(); await page.keyboard.press("Enter");
+assert((await page.locator(".day-body:visible").count()) === 0, "collapse all");
+await page.locator(".day-controls").scrollIntoViewIfNeeded(); await page.waitForTimeout(800);
+await page.screenshot({ path: out("13c-istanbul-collapsed") });
+await page.reload(); await page.locator(".day").first().waitFor();
+assert((await page.locator(".day-body:visible").count()) === 0, "collapsed state remembered per trip");
+await page.getByRole("button", { name: "Expand day 1" }).click();
+assert((await page.locator(".day-body:visible").count()) === 1, "expand single day");
+await page.getByRole("button", { name: "Expand all" }).click();
+await page.locator(".mosaic-wrap").scrollIntoViewIfNeeded(); await page.waitForTimeout(800);
+await page.screenshot({ path: out("13d-istanbul-mosaic") });
 
+for (const [city, n] of [["Rome", "18"], ["Paris", "19"], ["Tokyo", "20"]]) {
+  await page.goto(BASE + "/new/?dest=" + city);
+  await page.fill("#arr", "2026-11-02"); await page.fill("#dep", "2026-11-04");
+  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Generate itinerary" }).click();
+  await page.getByRole("button", { name: "Save my guide" }).click();
+  await page.waitForURL(/\/trip\/?\?id=/); await page.waitForTimeout(1500);
+  assert((await page.locator(".themed").getAttribute("data-theme")) === city.toLowerCase(), `${city} theme`);
+  await page.screenshot({ path: out(`${n}-guide-${city.toLowerCase()}`) });
+  await page.locator(".day").nth(1).scrollIntoViewIfNeeded(); await page.waitForTimeout(800);
+  await page.screenshot({ path: out(`${n}b-${city.toLowerCase()}-day`) });
+}
 await page.goto(BASE + "/"); await page.locator(".trip-card").first().waitFor();
 await page.screenshot({ path: out("14-home-with-trips"), fullPage: true });
 

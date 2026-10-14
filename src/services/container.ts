@@ -7,6 +7,7 @@ import { ExternalLinkDirectionsProvider } from "./providers/directions";
 import { DemoWeatherProvider, OpenMeteoWeatherProvider } from "./providers/weather";
 import type { DirectionsProvider } from "./providers/types";
 import { RefreshService } from "./refresh";
+import { UiPrefs } from "./uiPrefs";
 import { NominatimGeocoder, type Geocoder } from "./geocoding";
 
 /**
@@ -20,6 +21,7 @@ export interface Services {
   directions: DirectionsProvider;
   refresh: RefreshService;
   geocoder: Geocoder;
+  uiPrefs: UiPrefs;
   persistenceLabel: string;
 }
 
@@ -41,6 +43,7 @@ export function getServices(): Services {
     generator: new DemoItineraryGenerator(),
     directions: new ExternalLinkDirectionsProvider(),
     refresh: new RefreshService(weather, new FrankfurterCurrencyRateProvider(), () => (typeof window === "undefined" ? null : window.localStorage)),
+    uiPrefs: new UiPrefs(() => (typeof window === "undefined" ? null : window.localStorage)),
     geocoder: new NominatimGeocoder(() => (typeof window === "undefined" ? null : window.localStorage)),
     persistenceLabel: "This browser only (localStorage)",
   };

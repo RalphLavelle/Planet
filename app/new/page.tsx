@@ -36,6 +36,8 @@ export default function NewTrip() {
   const [busy, setBusy] = useState(false);
   const [saveError, setSaveError] = useState("");
 
+  // Prefill from ?dest= (destination cards on the home page).
+  useEffect(() => { const d = new URLSearchParams(window.location.search).get("dest"); if (d) setDestination(d.slice(0, 120)); }, []);
   // Restore an unconfirmed draft from this tab's session storage.
   useEffect(() => { getServices().drafts.getDraft().then((d) => { if (d) { setDraft(d); setDestination(d.destination.name); setArrival(d.arrivalDate); setDeparture(d.departureDate); setCurrency(d.nativeCurrency); setAccommodation(d.accommodation); setArrNum(d.flights.arrival?.number ?? ""); setArrTime(d.flights.arrival?.time ?? ""); setDepNum(d.flights.departure?.number ?? ""); setDepTime(d.flights.departure?.time ?? ""); setPrefs(d.preferences); setStep(2); } }); }, []);
 

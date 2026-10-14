@@ -1,8 +1,10 @@
 import { ActivitySchema, FlightsSchema, type Activity, type Trip } from "@/domain/schemas";
 import { newId } from "@/lib/ids";
+import { retitle } from "@/domain/dayTitles";
 
 /** Pure, immutable itinerary operations. Every op returns a new Trip with updatedAt bumped. */
-const touch = (t: Trip, days: Trip["days"]): Trip => ({ ...t, days, updatedAt: new Date().toISOString() });
+/** Every activity change goes through here so auto day titles are always recomputed from current activities. */
+const touch = (t: Trip, days: Trip["days"]): Trip => retitle({ ...t, days, updatedAt: new Date().toISOString() });
 const findDay = (t: Trip, dayId: string) => { const i = t.days.findIndex((d) => d.id === dayId); if (i < 0) throw new Error("Day not found"); return i; };
 
 export type ActivityPatch = Partial<Pick<Activity, "title" | "notes" | "startTime" | "durationMinutes" | "description">>;
@@ -63,7 +65,8 @@ export function mergeRegenerated(current: Trip, regenerated: Trip["days"]): Trip
     const old = current.days.find((d) => d.date === nd.date);
     const kept = old?.activities.filter((a) => a.origin !== "generated") ?? [];
     const keptPlaces = new Set(kept.map((a) => a.placeId).filter(Boolean));
-    return { ...nd, id: old?.id ?? nd.id, notes: old?.notes ?? nd.notes, activities: [...nd.activities.filter((a) => !a.placeId || !keptPlaces.has(a.placeId)), ...kept].sort((a, b) => (a.startTime ?? "99").localeCompare(b.startTime ?? "99")) };
+    const keepTitle = old?.titleMode === "user" ? { title: old.title, titleMode: "user" as const } : {};
+    return { ...nd, ...keepTitle, id: old?.id ?? nd.id, notes: old?.notes ?? nd.notes, activities: [...nd.activities.filter((a) => !a.placeId || !keptPlaces.has(a.placeId)), ...kept].sort((a, b) => (a.startTime ?? "99").localeCompare(b.startTime ?? "99")) };
   });
   return touch(current, days);
 }
@@ -72,5 +75,13 @@ export { newId };
 
 /** Update flight details. Does NOT re-plan the itinerary; the UI offers "Regenerate" to refit days. */
 export function updateFlights(t: Trip, flights: Trip["flights"]): Trip {
-  return { ...t, flights: FlightsSchema.parse(flights), updatedAt: new Date().toISOString() };
+  return retitle({ ...t, flights: FlightsSchema.parse(flights), updatedAt: new Date().toISOString() });
 }
+
+/** Inline title edit: an empty string resets to the automatic title. */
+export function renameDay(t: Trip, dayId: string, title: string): Trip {
+  const di = findDay(t, dayId);
+  const clean = title.trim().slice(0, 120);
+  return touch(t, t.days.map((d, i) => i !== di ? d : clean ? { ...d, title: clean, titleMode: "user" as const } : { ...d, titleMode: "auto" as const }));
+}
+export function resetDayTitle(t: Trip, dayId: string): Trip { return renameDay(t, dayId, ""); }

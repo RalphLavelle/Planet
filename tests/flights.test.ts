@@ -43,7 +43,7 @@ describe("flights", () => {
     expect(createSnapshot(t, { includeFlights: true }).trip.flights.arrival?.number).toBe("A3 601");
     const u = updateFlights(t, { arrival: { number: "oa 123", time: "09:00" } });
     expect(u.flights.arrival?.number).toBe("OA 123");
-    expect(u.days).toBe(t.days);
+    expect(u.days).toEqual(t.days);
     expect(() => updateFlights(t, { arrival: { number: "nope!" } })).toThrow();
   });
 });

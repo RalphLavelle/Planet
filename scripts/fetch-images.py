@@ -23,8 +23,20 @@ ARTICLES = {
 FREE = re.compile(r"^(CC BY|CC0|Public domain|PD|CC-BY|Attribution)", re.I)
 def get(url): return json.load(urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30))
 strip = lambda h: re.sub(r"<[^>]+>", "", h or "").strip()
-credits = {}
+GALLERY = {
+ "athens": ["Erechtheion", "Odeon of Herodes Atticus", "Evzones", "Kerameikos"],
+ "istanbul": ["Simit", "Turkish tea", "İznik pottery", "Maiden's Tower", "Basilica Cistern", "Süleymaniye Mosque", "Ortaköy Mosque"],
+ "rome": ["Roman Forum", "Piazza Navona", "St. Peter's Basilica", "Castel Sant'Angelo", "Spanish Steps"],
+ "paris": ["Notre-Dame de Paris", "Arc de Triomphe", "Pont Alexandre III", "Croissant", "Palais Garnier"],
+ "tokyo": ["Tokyo Tower", "Mount Fuji", "Kaminarimon", "Ramen", "Shinjuku"],
+}
+for dest, titles in GALLERY.items():
+    for t in titles: ARTICLES[f"{dest}:gallery-{re.sub(r'[^a-z0-9]+', '-', t.lower()).strip('-')}"] = t
+# Incremental: keep existing entries (including hand-picked replacements) and only fetch new keys.
+try: credits = json.load(open("src/services/itinerary/imageCredits.json"))
+except Exception: credits = {}
 for key, title in ARTICLES.items():
+    if key in credits: continue
     try:
         q = get("https://en.wikipedia.org/w/api.php?" + urllib.parse.urlencode({"action": "query", "titles": title, "prop": "pageimages", "piprop": "name", "format": "json", "redirects": 1}))
         page = next(iter(q["query"]["pages"].values())); fname = page.get("pageimage")
@@ -49,7 +61,9 @@ print(len(credits), "images")
 # Optimise: re-encode everything as ~720px JPEG to keep the bundle small.
 from PIL import Image
 for k, c in credits.items():
-    src = "public" + c["src"]; dst = os.path.splitext(src)[0] + ".jpg"
+    src = "public" + c["src"]
+    if src.endswith(".jpg") and os.path.getsize(src) < 400_000 and Image.open(src).width <= 720: continue
+    dst = os.path.splitext(src)[0] + ".jpg"
     im = Image.open(src).convert("RGB"); im.thumbnail((720, 720)); im.save(dst + ".tmp", "JPEG", quality=72, optimize=True, progressive=True)
     if src != dst: os.remove(src)
     os.replace(dst + ".tmp", dst); c["src"] = dst.removeprefix("public")

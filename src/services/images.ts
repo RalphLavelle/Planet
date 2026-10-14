@@ -11,3 +11,12 @@ const CREDITS = credits as Record<string, ImageCredit>;
 export function placeImage(placeId?: string): ImageCredit | null { return (placeId && CREDITS[placeId]) || null; }
 export function destinationImage(catalogKey?: string): ImageCredit | null { return (catalogKey && CREDITS[`${catalogKey}:hero`]) || null; }
 export function allImageCredits(): [string, ImageCredit][] { return Object.entries(CREDITS); }
+
+/** Photos for a destination collage: hero + gallery + catalogue places, de-duplicated. */
+export function destinationGallery(catalogKey?: string, limit = 7): ImageCredit[] {
+  if (!catalogKey) return [];
+  const all = Object.entries(CREDITS).filter(([k]) => k.startsWith(catalogKey + ":"));
+  const order = (k: string) => (k.endsWith(":hero") ? 0 : k.includes(":gallery-") ? 1 : 2);
+  const seen = new Set<string>();
+  return all.sort((a, b) => order(a[0]) - order(b[0])).map(([, c]) => c).filter((c) => (seen.has(c.title) ? false : (seen.add(c.title), true))).slice(0, limit);
+}

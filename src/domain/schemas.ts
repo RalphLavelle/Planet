@@ -90,6 +90,8 @@ export const ItineraryDaySchema = z.object({
   id: z.string(),
   date: IsoDateSchema,
   title: z.string().max(120).default(""),
+  /** "auto": title is derived from the day's activities and recomputed after edits; "user": typed by the traveller, kept. */
+  titleMode: z.enum(["auto", "user"]).default("auto"),
   notes: z.string().max(1000).default(""),
   activities: z.array(ActivitySchema),
 });

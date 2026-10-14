@@ -36,6 +36,28 @@ function TripCard({ t }: { t: TripSummary }) {
   );
 }
 
+const THEMED = ["Athens", "Istanbul", "Rome", "Paris", "Tokyo"];
+function DestinationGrid() {
+  return (
+    <ul className="dest-grid">
+      {THEMED.map((name) => {
+        const dest = resolveDestination(name).destination;
+        const photo = destinationImage(dest.catalogKey);
+        return (
+          <li key={name}>
+            <DestinationThemeProvider destination={dest}>
+              <Link href={`/new/?dest=${encodeURIComponent(name)}`} className="dest-card">
+                {photo && <>{/* eslint-disable-next-line @next/next/no-img-element */}<img src={photo.src} alt="" loading="lazy" /></>}
+                <span className="dest-card-body"><OrnamentRow size={22} /><strong>{name}</strong><span>{selectTheme(dest).tagline}</span></span>
+              </Link>
+            </DestinationThemeProvider>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 function FeaturedAthens({ onTry, busy }: { onTry: () => void; busy: boolean }) {
   const photo = destinationImage("athens");
   const dest = resolveDestination("Athens").destination;
@@ -101,6 +123,8 @@ export default function Home() {
         </DestinationHero>
 
         <FeaturedAthens onTry={demo} busy={busy} />
+        <ThemedSectionDivider label="Themed destinations" icon={<Compass size={20} aria-hidden="true" />} />
+        <DestinationGrid />
         <ThemedSectionDivider label="Your trips" icon={<Map size={20} aria-hidden="true" />} />
         {trips === null ? <p className="muted">Loading your trips…</p> : trips.length === 0 ? (
           <div className="empty"><Map size={28} aria-hidden="true" /><p>No trips yet. Plan one, try the Athens demo, or <Link href="/import">import a shared snapshot</Link>.</p></div>

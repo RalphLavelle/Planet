@@ -3,6 +3,7 @@ import {
   type Activity, type ActivityCategory, type Destination, type Interest, type ItineraryDay, type Place, type Preferences, type ValidTripInput,
 } from "@/domain/schemas";
 import { addMinutes, datesBetween } from "@/lib/dates";
+import { autoDayTitle } from "@/domain/dayTitles";
 import { ARRIVAL_BUFFER_MIN, DEPARTURE_BUFFER_MIN } from "@/domain/schemas";
 import { newId } from "@/lib/ids";
 import { findCatalogDestination, type CatalogDestination, type CatalogPlace } from "./catalog";
@@ -120,9 +121,7 @@ export class DemoItineraryGenerator implements ItineraryGenerator {
       if (toMin(t) <= toMin("21:30")) add(takeFit(dinners, true));
       if (prefs.interests.includes("nightlife") || (prefs.pace === "packed" && rand() > 0.5)) add(takeFit(nightlife, false));
 
-      const title = acts.find((a) => a.category !== "food")?.title;
-      const dayTitle = isFirst && multi ? "Arrival & first look" : isLast && multi && depT ? "Last look & departure" : title ? `Day ${i + 1}: ${title.split(/[&,(]/)[0].trim()}` : `Day ${i + 1}`;
-      return ItineraryDaySchema.parse({ id: newId("d_"), date, title: dayTitle, notes: "", activities: acts });
+      return ItineraryDaySchema.parse({ id: newId("d_"), date, title: autoDayTitle({ activities: acts }, i, dates.length, !!depT), titleMode: "auto", notes: "", activities: acts });
     });
 
     return { destination, days, places, generator: this.id };

@@ -422,5 +422,205 @@
   "license": "CC BY 2.0",
   "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
   "sourceUrl": "https://commons.wikimedia.org/wiki/File:G2_Street_20090626_2.jpg"
+ },
+ "athens:gallery-erechtheion": {
+  "src": "/images/places/athens-gallery-erechtheion.jpg",
+  "title": "Erechtheum_Acropolis_Athens.jpg",
+  "author": "Jebulon",
+  "license": "CC0",
+  "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Erechtheum_Acropolis_Athens.jpg"
+ },
+ "athens:gallery-odeon-of-herodes-atticus": {
+  "src": "/images/places/athens-gallery-odeon-of-herodes-atticus.jpg",
+  "title": "Odeon_of_Herodes_Atticus_(34580450331).jpg",
+  "author": "Robert Anders from Hamburg, Germany",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Odeon_of_Herodes_Atticus_(34580450331).jpg"
+ },
+ "athens:gallery-evzones": {
+  "src": "/images/places/athens-gallery-evzones.jpg",
+  "title": "Evzones,_ca._1900.jpg",
+  "author": "Panos Aravantinos (1886-1930)",
+  "license": "Public domain",
+  "licenseUrl": "",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Evzones,_ca._1900.jpg"
+ },
+ "athens:gallery-kerameikos": {
+  "src": "/images/places/athens-gallery-kerameikos.jpg",
+  "title": "Kerameikos_Cemetery_on_July_28,_2019.jpg",
+  "author": "George E. Koronaios",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Kerameikos_Cemetery_on_July_28,_2019.jpg"
+ },
+ "istanbul:gallery-simit": {
+  "src": "/images/places/istanbul-gallery-simit.jpg",
+  "title": "Simit-2x.JPG",
+  "author": "Unknown",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Simit-2x.JPG"
+ },
+ "istanbul:gallery-turkish-tea": {
+  "src": "/images/places/istanbul-gallery-turkish-tea.jpg",
+  "title": "Turkish_tea2.jpg",
+  "author": "henribergius",
+  "license": "CC BY-SA 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Turkish_tea2.jpg"
+ },
+ "istanbul:gallery-i-znik-pottery": {
+  "src": "/images/places/istanbul-gallery-i-znik-pottery.jpg",
+  "title": "Turkey;_Iznik_-_Two_Tiles_-_Google_Art_Project.jpg",
+  "author": "Turkey; Iznik",
+  "license": "Public domain",
+  "licenseUrl": "",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Turkey;_Iznik_-_Two_Tiles_-_Google_Art_Project.jpg"
+ },
+ "istanbul:gallery-maiden-s-tower": {
+  "src": "/images/places/istanbul-gallery-maiden-s-tower.jpg",
+  "title": "Istanbul_Kız_Kulesi_(54511155871)_(cropped).jpg",
+  "author": "Jorge Franganillo",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Istanbul_K%C4%B1z_Kulesi_(54511155871)_(cropped).jpg"
+ },
+ "istanbul:gallery-basilica-cistern": {
+  "src": "/images/places/istanbul-gallery-basilica-cistern.jpg",
+  "title": "Cisterna_Basílica,_Estambul,_Turquía,_2024-09-28,_DD_58-60_HDR.jpg",
+  "author": "Diego Delso",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cisterna_Bas%C3%ADlica,_Estambul,_Turqu%C3%ADa,_2024-09-28,_DD_58-60_HDR.jpg"
+ },
+ "istanbul:gallery-s-leymaniye-mosque": {
+  "src": "/images/places/istanbul-gallery-s-leymaniye-mosque.jpg",
+  "title": "SüleymaniyeMosqueIstanbul_(cropped).jpg",
+  "author": "Hunanuk",
+  "license": "CC0",
+  "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:S%C3%BCleymaniyeMosqueIstanbul_(cropped).jpg"
+ },
+ "rome:gallery-roman-forum": {
+  "src": "/images/places/rome-gallery-roman-forum.jpg",
+  "title": "Foro_Romano_Musei_Capitolini_Roma.jpg",
+  "author": "This Photo was taken by Wolfgang Moroder.  \n\nFeel free to use my photos, but please mention me as the author and send me",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Foro_Romano_Musei_Capitolini_Roma.jpg"
+ },
+ "rome:gallery-piazza-navona": {
+  "src": "/images/places/rome-gallery-piazza-navona.jpg",
+  "title": "Piazza_Navona_(Rome)_at_night.jpg",
+  "author": "NikonZ7II",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Piazza_Navona_(Rome)_at_night.jpg"
+ },
+ "rome:gallery-st-peter-s-basilica": {
+  "src": "/images/places/rome-gallery-st-peter-s-basilica.jpg",
+  "title": "Basilica_di_San_Pietro_in_Vaticano_September_2015-1a.jpg",
+  "author": "Alvesgaspar",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Basilica_di_San_Pietro_in_Vaticano_September_2015-1a.jpg"
+ },
+ "rome:gallery-castel-sant-angelo": {
+  "src": "/images/places/rome-gallery-castel-sant-angelo.jpg",
+  "title": "Castel_Sant'Angelo_at_Night.jpg",
+  "author": "Livioandronico2013",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Castel_Sant%27Angelo_at_Night.jpg"
+ },
+ "rome:gallery-spanish-steps": {
+  "src": "/images/places/rome-gallery-spanish-steps.jpg",
+  "title": "Piazza_di_Spagna_(Rome)_0004.jpg",
+  "author": "Arnaud 25",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Piazza_di_Spagna_(Rome)_0004.jpg"
+ },
+ "paris:gallery-notre-dame-de-paris": {
+  "src": "/images/places/paris-gallery-notre-dame-de-paris.jpg",
+  "title": "Notre-Dame_de_Paris,_4_October_2017.jpg",
+  "author": "Ali Sabbagh",
+  "license": "CC0",
+  "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Notre-Dame_de_Paris,_4_October_2017.jpg"
+ },
+ "paris:gallery-arc-de-triomphe": {
+  "src": "/images/places/paris-gallery-arc-de-triomphe.jpg",
+  "title": "Arc_de_Triomphe_-_Août_2026.jpg",
+  "author": "ZeusUpsistos",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Arc_de_Triomphe_-_Ao%C3%BBt_2026.jpg"
+ },
+ "paris:gallery-pont-alexandre-iii": {
+  "src": "/images/places/paris-gallery-pont-alexandre-iii.jpg",
+  "title": "Pont_Alexandre_III_depuis_pont_de_la_Concorde_Paris.jpg",
+  "author": "Jebulon",
+  "license": "CC0",
+  "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pont_Alexandre_III_depuis_pont_de_la_Concorde_Paris.jpg"
+ },
+ "paris:gallery-croissant": {
+  "src": "/images/places/paris-gallery-croissant.jpg",
+  "title": "Croissant-Petr_Kratochvil.jpg",
+  "author": "Petr Kratochvil",
+  "license": "CC0",
+  "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Croissant-Petr_Kratochvil.jpg"
+ },
+ "paris:gallery-palais-garnier": {
+  "src": "/images/places/paris-gallery-palais-garnier.jpg",
+  "title": "Paris_Opera_full_frontal_architecture,_May_2009.jpg",
+  "author": "Peter Rivera",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Paris_Opera_full_frontal_architecture,_May_2009.jpg"
+ },
+ "tokyo:gallery-tokyo-tower": {
+  "src": "/images/places/tokyo-gallery-tokyo-tower.jpg",
+  "title": "Tokyo_Tower_2023.jpg",
+  "author": "Akonnchiroll",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tokyo_Tower_2023.jpg"
+ },
+ "tokyo:gallery-mount-fuji": {
+  "src": "/images/places/tokyo-gallery-mount-fuji.jpg",
+  "title": "View_of_Mount_Fuji_from_Ōwakudani_20211202.jpg",
+  "author": "Suicasmo",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:View_of_Mount_Fuji_from_%C5%8Cwakudani_20211202.jpg"
+ },
+ "tokyo:gallery-kaminarimon": {
+  "src": "/images/places/tokyo-gallery-kaminarimon.jpg",
+  "title": "Day2-2_(40909714314).jpg",
+  "author": "Ajay Suresh from New York, NY, USA",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Day2-2_(40909714314).jpg"
+ },
+ "tokyo:gallery-ramen": {
+  "src": "/images/places/tokyo-gallery-ramen.jpg",
+  "title": "Shoyu_Ramen（Tokyo_Ramen）_-_01.jpg",
+  "author": "Quercus acuta",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Shoyu_Ramen%EF%BC%88Tokyo_Ramen%EF%BC%89_-_01.jpg"
+ },
+ "tokyo:gallery-shinjuku": {
+  "src": "/images/places/tokyo-gallery-shinjuku.jpg",
+  "title": "Skyscrapers_of_Shinjuku_2009_January.jpg",
+  "author": "Morio",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Skyscrapers_of_Shinjuku_2009_January.jpg"
  }
 }
