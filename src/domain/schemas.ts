@@ -1,0 +1,155 @@
+import { z } from "zod";
+
+/** Current schema version of persisted trips. Bump + add a migration in repositories/migrations.ts. */
+export const TRIP_SCHEMA_VERSION = 1;
+
+export const CurrencyCodeSchema = z
+  .string()
+  .regex(/^[A-Z]{3}$/, "Use a 3-letter ISO currency code, e.g. EUR");
+export type CurrencyCode = z.infer<typeof CurrencyCodeSchema>;
+
+/** Money is always an estimate range in minor-agnostic decimal units, with explicit currency + confidence. */
+export const MoneyEstimateSchema = z.object({
+  min: z.number().nonnegative(),
+  max: z.number().nonnegative(),
+  currency: CurrencyCodeSchema,
+  confidence: z.enum(["verified", "estimated", "illustrative"]),
+});
+export type MoneyEstimate = z.infer<typeof MoneyEstimateSchema>;
+
+export const DataStatusSchema = z.enum(["live", "cached", "estimated", "demo", "unavailable", "user"]);
+export type DataStatus = z.infer<typeof DataStatusSchema>;
+
+export const SourceMetaSchema = z.object({
+  source: z.string(),
+  status: DataStatusSchema,
+  retrievedAt: z.string().datetime().optional(),
+});
+export type SourceMeta = z.infer<typeof SourceMetaSchema>;
+
+export const GeoPointSchema = z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) });
+export type GeoPoint = z.infer<typeof GeoPointSchema>;
+
+export const IsoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD");
+export const TimeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Expected HH:MM");
+
+export const InterestSchema = z.enum(["history", "food", "art", "architecture", "nightlife", "nature", "shopping"]);
+export type Interest = z.infer<typeof InterestSchema>;
+export const INTERESTS = InterestSchema.options;
+
+export const ActivityCategorySchema = z.enum([
+  "sight", "museum", "food", "cafe", "nightlife", "nature", "shopping", "walk", "viewpoint", "beach", "rest", "transport", "custom",
+]);
+export type ActivityCategory = z.infer<typeof ActivityCategorySchema>;
+
+export const PreferencesSchema = z.object({
+  interests: z.array(InterestSchema).default([]),
+  budget: z.enum(["shoestring", "moderate", "comfortable", "luxury"]).default("moderate"),
+  pace: z.enum(["relaxed", "balanced", "packed"]).default("balanced"),
+  walking: z.enum(["low", "medium", "high"]).default("medium"),
+  party: z.enum(["solo", "couple", "family", "group"]).default("couple"),
+  dietary: z.string().max(200).default(""),
+  accessibility: z.string().max(200).default(""),
+  notes: z.string().max(1000).default(""),
+});
+export type Preferences = z.infer<typeof PreferencesSchema>;
+
+export const PlaceSchema = z.object({
+  id: z.string(),
+  providerId: z.string().optional(),
+  name: z.string(),
+  location: GeoPointSchema.optional(),
+  categories: z.array(ActivityCategorySchema),
+  description: z.string(),
+  website: z.string().url().optional(),
+  openingHoursNote: z.string().optional(),
+  indoor: z.boolean().default(false),
+  meta: SourceMetaSchema,
+});
+export type Place = z.infer<typeof PlaceSchema>;
+
+export const ActivitySchema = z.object({
+  id: z.string(),
+  placeId: z.string().optional(),
+  title: z.string().min(1).max(120),
+  description: z.string().max(1000).default(""),
+  notes: z.string().max(1000).default(""),
+  category: ActivityCategorySchema,
+  startTime: TimeSchema.optional(),
+  durationMinutes: z.number().int().min(5).max(24 * 60),
+  cost: MoneyEstimateSchema.optional(),
+  location: GeoPointSchema.optional(),
+  imageRef: z.string().optional(),
+  indoor: z.boolean().default(false),
+  meta: SourceMetaSchema,
+  origin: z.enum(["generated", "edited", "manual"]),
+});
+export type Activity = z.infer<typeof ActivitySchema>;
+
+export const ItineraryDaySchema = z.object({
+  id: z.string(),
+  date: IsoDateSchema,
+  title: z.string().max(120).default(""),
+  notes: z.string().max(1000).default(""),
+  activities: z.array(ActivitySchema),
+});
+export type ItineraryDay = z.infer<typeof ItineraryDaySchema>;
+
+export const DestinationSchema = z.object({
+  name: z.string().min(1).max(120),
+  country: z.string().max(80).optional(),
+  countryCode: z.string().length(2).optional(),
+  location: GeoPointSchema.optional(),
+  timeZone: z.string().optional(),
+  localCurrency: CurrencyCodeSchema.optional(),
+  catalogKey: z.string().optional(),
+});
+export type Destination = z.infer<typeof DestinationSchema>;
+
+export const SharingSchema = z.object({
+  mode: z.enum(["private", "snapshot"]).default("private"),
+  includeAccommodation: z.boolean().default(false),
+  /** Reserved for a future server-backed share token. Not used for access control in the browser MVP. */
+  accessToken: z.string().optional(),
+});
+
+export const TripSchema = z.object({
+  schemaVersion: z.literal(TRIP_SCHEMA_VERSION),
+  id: z.string().min(6),
+  destination: DestinationSchema,
+  arrivalDate: IsoDateSchema,
+  departureDate: IsoDateSchema,
+  nativeCurrency: CurrencyCodeSchema,
+  accommodation: z.string().max(200).default(""),
+  preferences: PreferencesSchema,
+  days: z.array(ItineraryDaySchema),
+  places: z.array(PlaceSchema).default([]),
+  sharing: SharingSchema.prefault({}),
+  generator: z.string(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type Trip = z.infer<typeof TripSchema>;
+
+export const MAX_TRIP_DAYS = 21;
+
+/** Input from the creation wizard. */
+export const TripInputSchema = z
+  .object({
+    destination: z.string().trim().min(2, "Enter a destination").max(120),
+    arrivalDate: IsoDateSchema,
+    departureDate: IsoDateSchema,
+    nativeCurrency: CurrencyCodeSchema,
+    accommodation: z.string().trim().max(200).default(""),
+    preferences: PreferencesSchema.prefault({}),
+  })
+  .superRefine((v, ctx) => {
+    const a = Date.parse(v.arrivalDate), d = Date.parse(v.departureDate);
+    if (Number.isNaN(a) || Number.isNaN(d)) return;
+    const days = Math.round((d - a) / 86400000) + 1;
+    if (d < a) ctx.addIssue({ code: "custom", path: ["departureDate"], message: "Departure must be on or after arrival" });
+    else if (days > MAX_TRIP_DAYS)
+      ctx.addIssue({ code: "custom", path: ["departureDate"], message: `Trips can be at most ${MAX_TRIP_DAYS} days in this version` });
+  });
+export type TripInput = z.input<typeof TripInputSchema>;
+export type ValidTripInput = z.output<typeof TripInputSchema>;

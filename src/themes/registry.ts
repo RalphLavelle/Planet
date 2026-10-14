@@ -1,0 +1,17 @@
+import type { Destination } from "@/domain/schemas";
+import { athensTheme } from "./athens";
+import { istanbulTheme } from "./istanbul";
+import { neutralTheme } from "./neutral";
+import type { DestinationTheme } from "./types";
+
+/**
+ * Ordered theme registry. Matching uses structured metadata (catalogKey / ISO country code),
+ * never free-text names, so "Athens, Georgia (USA)" gets the neutral theme, not Greek motifs.
+ * Add a theme: create src/themes/<name>.tsx and insert it above neutralTheme.
+ */
+export const THEMES: DestinationTheme[] = [athensTheme, istanbulTheme, neutralTheme];
+
+export function selectTheme(d: Destination | undefined): DestinationTheme {
+  if (!d) return neutralTheme;
+  return THEMES.find((t) => t.matches(d)) ?? neutralTheme;
+}
