@@ -18,7 +18,7 @@ export default function ImportPage() {
     if (!r.ok) return setError(r.error);
     const t = tripFromSnapshot(r.snapshot);
     await getServices().trips.save(t);
-    router.push(`/trip/${t.id}?created=1`);
+    router.push(`/trip/?id=${t.id}&created=1`);
   }
 
   return (

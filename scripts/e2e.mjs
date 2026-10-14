@@ -37,7 +37,7 @@ await page.getByRole("button", { name: "Save my guide" }).click();
 await page.waitForURL(/\/trip\//);
 await page.getByRole("heading", { name: "Athens", level: 1 }).waitFor();
 await page.waitForTimeout(2500); // weather fetch
-const tripUrl = page.url().split("?")[0];
+const tripUrl = page.url().replace("&created=1", "");
 assert((await page.locator(".day").count()) === 4, "4 days generated for 10–13 Nov");
 await page.screenshot({ path: out("05-guide-athens-desktop"), fullPage: false });
 await page.screenshot({ path: out("06-guide-athens-full"), fullPage: true });

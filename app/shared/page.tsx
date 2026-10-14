@@ -22,7 +22,7 @@ export default function SharedPage() {
     if (!state?.snap) return;
     const t = tripFromSnapshot(state.snap);
     await getServices().trips.save(t);
-    router.push(`/trip/${t.id}?created=1`);
+    router.push(`/trip/?id=${t.id}&created=1`);
   }
 
   if (!state) return <div className="page"><p className="muted">Reading shared guide…</p></div>;

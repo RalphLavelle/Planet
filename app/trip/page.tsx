@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { Check, Trash2, Undo2 } from "lucide-react";
 import { DestinationThemeProvider } from "@/components/theme";
@@ -10,8 +10,9 @@ import { getServices } from "@/services/container";
 import { mergeRegenerated } from "@/services/editing";
 
 function TripPageInner() {
-  const { id } = useParams<{ id: string }>();
-  const created = useSearchParams().get("created");
+  const params = useSearchParams();
+  const id = params.get("id") ?? "";
+  const created = params.get("created");
   const router = useRouter();
   const [trip, setTrip] = useState<Trip | null | undefined>(undefined);
   const [history, setHistory] = useState<{ trip: Trip; label: string }[]>([]);

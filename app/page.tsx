@@ -17,7 +17,7 @@ function TripCard({ t }: { t: TripSummary }) {
   const theme = selectTheme(resolveDestination(t.destinationName).destination);
   return (
     <li>
-      <Link href={`/trip/${t.id}`} className="trip-card" style={{ background: `linear-gradient(135deg, ${theme.tokens.heroFrom}, ${theme.tokens.heroTo})` }}>
+      <Link href={`/trip/?id=${t.id}`} className="trip-card" style={{ background: `linear-gradient(135deg, ${theme.tokens.heroFrom}, ${theme.tokens.heroTo})` }}>
         <span className="trip-card-motif"><theme.Motif size={28} /></span>
         <strong>{t.destinationName}</strong>
         <span>{formatDay(t.arrivalDate, { day: "numeric", month: "short" })} – {formatDay(t.departureDate, { day: "numeric", month: "short", year: "numeric" })}</span>
@@ -46,7 +46,7 @@ export default function Home() {
     const s = getServices();
     const trip = await generateTrip({ destination: "Athens", arrivalDate: isoIn(7), departureDate: isoIn(10), nativeCurrency: "GBP", accommodation: "Koukaki", preferences: { interests: ["history", "food", "architecture"], pace: "balanced" } }, s.generator);
     await s.trips.save(trip);
-    router.push(`/trip/${trip.id}`);
+    router.push(`/trip/?id=${trip.id}`);
   }
   async function reset() {
     if (!window.confirm("Delete all trips saved in this browser? This cannot be undone.")) return;

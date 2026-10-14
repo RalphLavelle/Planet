@@ -86,7 +86,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
     try { await navigator.clipboard.writeText(text); setCopied(which); } catch { setCopied(which + "-fail"); }
     setTimeout(() => setCopied(""), 2500);
   }
-  const localUrl = typeof window !== "undefined" ? `${window.location.origin}/trip/${trip.id}` : "";
+  const localUrl = typeof window !== "undefined" ? `${window.location.origin}/trip/?id=${trip.id}` : "";
   const snapshotUrl = () => `${window.location.origin}/shared#${encodeSnapshot(createSnapshot(trip, { includeAccommodation: includeAcc }))}`;
   function download() {
     const blob = new Blob([JSON.stringify(createSnapshot(trip, { includeAccommodation: includeAcc }), null, 2)], { type: "application/json" });

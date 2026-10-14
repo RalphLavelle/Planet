@@ -61,7 +61,7 @@ export default function NewTrip() {
       const s = getServices();
       await s.trips.save(draft);
       await s.drafts.clearDraft();
-      router.push(`/trip/${draft.id}?created=1`);
+      router.push(`/trip/?id=${draft.id}&created=1`);
     } catch (e) { setSaveError(e instanceof Error ? e.message : "Could not save"); }
   }
 
