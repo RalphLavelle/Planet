@@ -17,7 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#main" className="skip">Skip to content</a>
         <nav className="topbar" aria-label="Main">
           <Link href="/" className="brand"><span className="brand-dot" aria-hidden="true" />Planet</Link>
-          <div className="topbar-links"><Link href="/import">Import</Link><Link href="/new" className="btn btn-small">New trip</Link></div>
+          <div className="topbar-links"><Link href="/new" className="btn btn-small">New trip</Link></div>
         </nav>
         <main id="main">{children}</main>
         <footer className="footer"><p>Planet MVP · trips are stored only in this browser. Content marked “Demo data” is illustrative, not verified. · <Link href="/credits">Photo credits</Link></p></footer>

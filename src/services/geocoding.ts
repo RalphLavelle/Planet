@@ -3,11 +3,23 @@ import type { KeyValueStore } from "@/repositories/TripRepository";
 
 export interface Geocoder { geocode(query: string): Promise<GeoPoint | null> }
 
+/** Shared politeness gate for every Nominatim call in this tab: ≥1.1 s between requests (usage policy: max 1/s). */
+let lastNominatim = 0;
+let gate: Promise<void> = Promise.resolve();
+export function nominatimThrottle(): Promise<void> {
+  const next = gate.then(async () => {
+    const wait = Math.max(0, 1100 - (Date.now() - lastNominatim));
+    if (wait) await new Promise((r) => setTimeout(r, wait));
+    lastNominatim = Date.now();
+  });
+  gate = next;
+  return next;
+}
+
 /** Free, keyless OpenStreetMap Nominatim. One request per second, results cached (incl. misses). */
 export class NominatimGeocoder implements Geocoder {
-  private last = 0;
   private queue: Promise<unknown> = Promise.resolve();
-  constructor(private readonly cache: () => KeyValueStore | null, private readonly fetchImpl: typeof fetch = (...a) => fetch(...a)) {}
+  constructor(private readonly cache: () => KeyValueStore | null, private readonly fetchImpl: typeof fetch = (...a) => fetch(...a), private readonly throttle: () => Promise<void> = nominatimThrottle) {}
 
   geocode(query: string): Promise<GeoPoint | null> {
     const q = query.trim();
@@ -16,9 +28,7 @@ export class NominatimGeocoder implements Geocoder {
     const stored = this.cache()?.getItem(key);
     if (stored !== null && stored !== undefined) { try { return Promise.resolve(JSON.parse(stored) as GeoPoint | null); } catch { /* refetch */ } }
     const run = async (): Promise<GeoPoint | null> => {
-      const wait = Math.max(0, 1100 - (Date.now() - this.last));
-      if (wait) await new Promise((r) => setTimeout(r, wait));
-      this.last = Date.now();
+      await this.throttle();
       try {
         const res = await this.fetchImpl(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(q)}`, { headers: { Accept: "application/json" } });
         if (!res.ok) return null;

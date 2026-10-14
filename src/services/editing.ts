@@ -1,4 +1,4 @@
-import { ActivitySchema, FlightsSchema, type Activity, type Trip } from "@/domain/schemas";
+import { ActivitySchema, FlightsSchema, MEAL_DEFAULTS, type Activity, type GeoPoint, type Meal, type Trip, type Venue } from "@/domain/schemas";
 import { newId } from "@/lib/ids";
 import { retitle } from "@/domain/dayTitles";
 
@@ -23,6 +23,24 @@ export function addActivity(t: Trip, dayId: string, input: { title: string; star
     meta: { source: "You", status: "user" }, origin: "manual",
   });
   return touch(t, t.days.map((d, i) => i !== di ? d : { ...d, activities: [...d.activities, a] }));
+}
+
+/** Add a lunch/dinner at a looked-up (or manually entered) venue. Default time per meal unless given. */
+export function addMeal(t: Trip, dayId: string, input: { meal: Meal; venue: Venue; location?: GeoPoint; startTime?: string; durationMinutes?: number; notes?: string }): Trip {
+  const di = findDay(t, dayId);
+  const d = MEAL_DEFAULTS[input.meal];
+  const label = input.meal === "lunch" ? "Lunch" : "Dinner";
+  const a = ActivitySchema.parse({
+    id: newId("a_"), title: `${label} at ${input.venue.name}`.slice(0, 120), description: input.venue.address, notes: input.notes ?? "", category: "food",
+    startTime: input.startTime || d.startTime, durationMinutes: input.durationMinutes ?? d.durationMinutes, indoor: true,
+    location: input.location, meal: input.meal, venue: input.venue,
+    meta: { source: input.venue.source === "osm" ? "OpenStreetMap" : "You", status: "user" }, origin: "manual",
+  });
+  // Insert before the first timed item that starts later; keep the user's existing order otherwise.
+  const acts = [...t.days[di].activities];
+  const at = acts.findIndex((x) => !!x.startTime && x.startTime > a.startTime!);
+  acts.splice(at < 0 ? acts.length : at, 0, a);
+  return touch(t, t.days.map((day, i) => i !== di ? day : { ...day, activities: acts }));
 }
 
 export function removeActivity(t: Trip, dayId: string, activityId: string): Trip {

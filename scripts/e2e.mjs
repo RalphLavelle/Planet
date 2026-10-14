@@ -77,9 +77,9 @@ const moving = (await titles(day2))[2];
 await day2.getByRole("combobox", { name: `Move ${moving} to another day` }).selectOption({ index: 1 });
 assert((await titles(day1)).includes(moving) && !(await titles(day2)).includes(moving), "move activity to another day");
 // Add custom
-await day1.getByRole("button", { name: "Add your own activity" }).click();
-await day1.locator("#new-title").fill("Pick up ferry tickets");
-await day1.locator("#new-time").fill("17:00");
+await day1.getByRole("button", { name: "Add an item" }).click();
+await day1.locator("[id^=new-title]").fill("Pick up ferry tickets");
+await day1.locator("[id^=new-time]").fill("17:00");
 await day1.getByRole("button", { name: "Add", exact: true }).click();
 assert((await titles(day1)).includes("Pick up ferry tickets"), "add custom activity");
 // Remove + undo
@@ -88,6 +88,37 @@ await day1.getByRole("button", { name: "Remove Pick up ferry tickets" }).click()
 assert((await titles(day1)).length === n - 1, "remove activity");
 await page.locator(".toast").getByRole("button", { name: "Undo" }).click();
 assert((await titles(day1)).includes("Pick up ferry tickets"), "undo restores removed activity");
+// Add lunch: OSM lookup with candidate picker
+await day2.getByRole("button", { name: "Add an item" }).click();
+await day2.getByRole("radio", { name: "Lunch" }).click();
+assert((await day2.locator("[id^=new-time]").inputValue()) === "13:00", "lunch defaults to 13:00");
+await day2.locator("[id^=rest]").fill("Mikel");
+await day2.locator(".add-item").scrollIntoViewIfNeeded();
+await page.screenshot({ path: out("21-add-lunch-form") });
+await day2.getByRole("button", { name: "Look up" }).click();
+await day2.locator(".venue-preview, .candidates").first().waitFor({ timeout: 20000 });
+assert(await day2.locator(".candidates").count(), "candidate picker for multiple matches");
+await day2.locator(".add-item").scrollIntoViewIfNeeded(); await page.screenshot({ path: out("21a-add-lunch-candidates") });
+await day2.locator(".candidate").first().click();
+await day2.locator(".venue-preview").waitFor(); await page.waitForTimeout(1500);
+await day2.locator(".add-item").scrollIntoViewIfNeeded();
+await page.screenshot({ path: out("21b-add-lunch-picked") });
+await day2.getByRole("button", { name: "Add lunch" }).click();
+const lunchCard = day2.locator(".activity", { hasText: "Lunch at" }).first();
+await lunchCard.waitFor(); assert((await lunchCard.innerText()).includes("13:00"), "lunch added at default time");
+await lunchCard.locator(".minimap, .leaflet-container").first().waitFor({ timeout: 15000 }).then(() => log("lunch has mini map")).catch(() => log("WARN lunch mini map not visible"));
+await lunchCard.scrollIntoViewIfNeeded(); await page.waitForTimeout(2000);
+await lunchCard.screenshot({ path: out("21c-lunch-item") });
+// Manual fallback when not found
+await day2.getByRole("button", { name: "Add an item" }).click();
+await day2.getByRole("radio", { name: "Dinner" }).click();
+await day2.locator("[id^=rest]").fill("Zzqx Nonexistent Taverna");
+await day2.getByRole("button", { name: "Look up" }).click();
+await day2.getByText("No match found").waitFor({ timeout: 20000 });
+await day2.getByRole("button", { name: /manually/ }).click();
+await day2.locator("[id^=addr]").fill("Our friend's flat");
+await day2.getByRole("button", { name: "Add dinner" }).click();
+assert((await titles(day2)).includes("Dinner at Zzqx Nonexistent Taverna"), "manual dinner entry when not found");
 
 // Edit departure flight
 await page.getByRole("button", { name: "Edit departure flight" }).click();
@@ -131,8 +162,6 @@ await p2.screenshot({ path: out("10-shared-snapshot"), fullPage: false });
 await p2.goto(tripUrl); await p2.getByText("Guide not found in this browser").waitFor();
 log("local link on another browser explains limitation");
 await p2.screenshot({ path: out("11-local-link-other-device") });
-await p2.goto(link); await p2.getByRole("button", { name: "Save a copy to this browser" }).click();
-await p2.waitForURL(/\/trip\/?\?id=/); log("import snapshot into another browser");
 await p2.goto(BASE + "/shared#garbage!!"); await p2.getByText("Can't open this shared guide").waitFor(); log("invalid snapshot rejected");
 
 // Neutral fallback destination
@@ -174,6 +203,23 @@ await page.waitForTimeout(1500);
 await page.locator(".day").nth(1).scrollIntoViewIfNeeded();
 await page.screenshot({ path: out("13b-istanbul-day-expanded") });
 await page.locator(".day").nth(1).getByRole("button", { name: "Auto title" }).click();
+// Dinner item with OSM lookup (Istanbul)
+const dday = page.locator(".day").nth(1);
+await dday.getByRole("button", { name: "Add an item" }).click();
+await dday.getByRole("radio", { name: "Dinner" }).click();
+await dday.locator("[id^=rest]").fill("Hamdi");
+await dday.getByRole("button", { name: "Look up" }).click();
+await dday.locator(".venue-preview, .candidates").first().waitFor({ timeout: 20000 });
+if (await dday.locator(".candidates").count()) {
+  await dday.locator(".add-item").scrollIntoViewIfNeeded(); await page.screenshot({ path: out("22-dinner-candidates") });
+  await dday.locator(".candidate").first().click();
+}
+await dday.locator(".venue-preview").waitFor(); await page.waitForTimeout(2500);
+await dday.getByRole("button", { name: "Add dinner" }).click();
+const dinnerCard = dday.locator(".activity", { hasText: "Dinner at" }).first();
+await dinnerCard.waitFor(); assert((await dinnerCard.innerText()).includes("20:00"), "dinner added at 20:00");
+await dinnerCard.scrollIntoViewIfNeeded(); await page.waitForTimeout(2500);
+await dinnerCard.screenshot({ path: out("22b-dinner-item") });
 assert(/^Day 2: /.test(await page.locator(".day").nth(1).locator(".day-title").innerText()), "reset to auto title");
 // Collapse all (keyboard) + persistence
 await page.getByRole("button", { name: "Collapse all" }).focus(); await page.keyboard.press("Enter");
@@ -185,8 +231,6 @@ assert((await page.locator(".day-body:visible").count()) === 0, "collapsed state
 await page.getByRole("button", { name: "Expand day 1" }).click();
 assert((await page.locator(".day-body:visible").count()) === 1, "expand single day");
 await page.getByRole("button", { name: "Expand all" }).click();
-await page.locator(".mosaic-wrap").scrollIntoViewIfNeeded(); await page.waitForTimeout(800);
-await page.screenshot({ path: out("13d-istanbul-mosaic") });
 
 for (const [city, n] of [["Rome", "18"], ["Paris", "19"], ["Tokyo", "20"]]) {
   await page.goto(BASE + "/new/?dest=" + city);
@@ -207,8 +251,10 @@ await page.screenshot({ path: out("14-home-with-trips"), fullPage: true });
 const m = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
 await m.addInitScript(() => {});
 const mp = await m.newPage();
-await mp.goto(link); await mp.getByText("read-only snapshot").waitFor(); await mp.getByRole("button", { name: "Save a copy to this browser" }).click();
-await mp.waitForURL(/\/trip\/?\?id=/); await mp.waitForTimeout(2000);
+await mp.goto(link); await mp.getByText("read-only snapshot").waitFor(); await mp.waitForTimeout(2000);
+assert((await mp.getByRole("button", { name: /Save a copy/ }).count()) === 0, "shared view has no import/save-copy");
+assert((await mp.request.get(BASE + "/import")).status() === 404, "/import route removed");
+assert((await page.getByRole("link", { name: "Import" }).count()) === 0, "no Import link in nav");
 await mp.screenshot({ path: out("15-mobile-guide-hero") });
 await mp.locator(".day").nth(1).scrollIntoViewIfNeeded(); await mp.waitForTimeout(300);
 await mp.screenshot({ path: out("16-mobile-day") });

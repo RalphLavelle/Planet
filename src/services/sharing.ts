@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { TripSchema, type Trip } from "@/domain/schemas";
 import { migrate } from "@/repositories/migrations";
-import { newId } from "@/lib/ids";
 
 /** Portable, read-only snapshot. Accommodation is stripped unless explicitly included. */
 export const SnapshotSchema = z.object({ kind: z.literal("planet-snapshot"), version: z.literal(1), createdAt: z.string().datetime(), trip: TripSchema });
@@ -34,8 +33,3 @@ export function parseSnapshot(text: string): { ok: true; snapshot: Snapshot } | 
   return r.success ? { ok: true, snapshot: r.data } : { ok: false, error: "Snapshot failed validation: " + (r.error.issues[0]?.message ?? "invalid") };
 }
 
-/** Imported trips get a fresh local id so they never overwrite an existing trip. */
-export function tripFromSnapshot(s: Snapshot): Trip {
-  const now = new Date().toISOString();
-  return TripSchema.parse({ ...s.trip, id: newId("t_"), sharing: { mode: "private", includeAccommodation: false, includeFlights: false }, createdAt: now, updatedAt: now });
-}

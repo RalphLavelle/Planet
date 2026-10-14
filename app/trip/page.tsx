@@ -59,7 +59,7 @@ function TripPageInner() {
     <div className="page narrow"><div className="card">
       <h1>Guide not found in this browser</h1>
       <p>Planet stores trips only in the browser where they were created. A local guide link won&apos;t open on another device or browser, and clearing browser data removes saved trips.</p>
-      <p>If someone shared this with you, ask them for the <strong>portable read-only link</strong> or an exported file, which you can <Link href="/import">import here</Link>.</p>
+      <p>If someone shared this with you, ask them for the <strong>portable read-only link</strong>.</p>
       <Link className="btn" href="/">Back to home</Link>
     </div></div>
   );

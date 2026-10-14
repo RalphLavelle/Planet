@@ -9,6 +9,7 @@ import type { DirectionsProvider } from "./providers/types";
 import { RefreshService } from "./refresh";
 import { UiPrefs } from "./uiPrefs";
 import { NominatimGeocoder, type Geocoder } from "./geocoding";
+import { OsmRestaurantFinder, type RestaurantFinder } from "./restaurants";
 
 /**
  * THE composition root. The only place concrete repositories/providers are chosen.
@@ -21,6 +22,7 @@ export interface Services {
   directions: DirectionsProvider;
   refresh: RefreshService;
   geocoder: Geocoder;
+  restaurants: RestaurantFinder;
   uiPrefs: UiPrefs;
   persistenceLabel: string;
 }
@@ -44,6 +46,7 @@ export function getServices(): Services {
     directions: new ExternalLinkDirectionsProvider(),
     refresh: new RefreshService(weather, new FrankfurterCurrencyRateProvider(), () => (typeof window === "undefined" ? null : window.localStorage)),
     uiPrefs: new UiPrefs(() => (typeof window === "undefined" ? null : window.localStorage)),
+    restaurants: new OsmRestaurantFinder(() => (typeof window === "undefined" ? null : window.localStorage)),
     geocoder: new NominatimGeocoder(() => (typeof window === "undefined" ? null : window.localStorage)),
     persistenceLabel: "This browser only (localStorage)",
   };

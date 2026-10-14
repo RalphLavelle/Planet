@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowDown, ArrowUp, CalendarDays, ChevronsDownUp, ChevronsUpDown, Clock, Droplets, Hourglass, Home, Map as MapIcon, Share2, Trees, Sparkles, ListOrdered, CloudRain, CloudSun, Copy, Download, ExternalLink, Lightbulb, Link2, MapPin, Navigation, Pencil, Plus,
+  ArrowDown, ArrowUp, CalendarDays, ChevronsDownUp, ChevronsUpDown, Clock, Droplets, Hourglass, Home, Map as MapIcon, Share2, Trees, Sparkles, ListOrdered, CloudRain, CloudSun, Copy, ExternalLink, Lightbulb, Link2, MapPin, Navigation, Pencil, Plus,
   RefreshCw, Sun, Thermometer, Trash2, Wallet,
 } from "lucide-react";
 import type { Activity, ItineraryDay, Trip } from "@/domain/schemas";
@@ -16,9 +16,9 @@ import { CategoryOrnament, DestinationHero, DestinationMotif, OrnamentRow, Theme
 import { destinationImage } from "@/services/images";
 import { FlightCard } from "./FlightCard";
 import { DayHeader, dayBannerPhotos } from "./DayHeader";
-import { PhotoMosaic } from "./PhotoMosaic";
 import { displayDayTitle } from "@/domain/dayTitles";
 import { MiniMap } from "./MiniMap";
+import { AddItem, VenueThumb } from "./AddItem";
 import type { GeoPoint } from "@/domain/schemas";
 import { ActivityCategoryIcon, ActivityThumb, CATEGORY_LABEL, PhotoCredit, StatusBadge } from "./ui";
 
@@ -39,21 +39,6 @@ function ActivityEditor({ a, onSave, onCancel }: { a: Activity; onSave: (p: edit
       <div className="field"><label htmlFor={`n-${a.id}`}>Your notes</label><textarea id={`n-${a.id}`} rows={2} maxLength={1000} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
       {err && <p className="err" role="alert">{err}</p>}
       <div className="row end"><button type="button" className="btn btn-ghost btn-small" onClick={onCancel}>Cancel</button><button className="btn btn-small">Save</button></div>
-    </form>
-  );
-}
-
-function AddActivity({ onAdd }: { onAdd: (v: { title: string; startTime?: string; durationMinutes: number }) => void }) {
-  const [open, setOpen] = useState(false), [title, setTitle] = useState(""), [time, setTime] = useState(""), [dur, setDur] = useState(60);
-  if (!open) return <button className="btn btn-ghost btn-small add-btn" onClick={() => setOpen(true)}><Plus size={16} aria-hidden="true" /> Add your own activity</button>;
-  return (
-    <form className="editor card" onSubmit={(e) => { e.preventDefault(); if (!title.trim()) return; onAdd({ title: title.trim(), startTime: time || undefined, durationMinutes: dur }); setTitle(""); setTime(""); setOpen(false); }}>
-      <div className="field"><label htmlFor="new-title">What are you planning?</label><input id="new-title" value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} autoFocus required /></div>
-      <div className="grid2">
-        <div className="field"><label htmlFor="new-time">Start time</label><input id="new-time" type="time" value={time} onChange={(e) => setTime(e.target.value)} /></div>
-        <div className="field"><label htmlFor="new-dur">Duration (min)</label><input id="new-dur" type="number" min={5} max={1440} step={5} value={dur} onChange={(e) => setDur(Number(e.target.value))} /></div>
-      </div>
-      <div className="row end"><button type="button" className="btn btn-ghost btn-small" onClick={() => setOpen(false)}>Cancel</button><button className="btn btn-small">Add</button></div>
     </form>
   );
 }
@@ -114,10 +99,6 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
   }
   const localUrl = typeof window !== "undefined" ? `${window.location.origin}/trip/?id=${trip.id}` : "";
   const snapshotUrl = () => `${window.location.origin}/shared#${encodeSnapshot(createSnapshot(trip, { includeAccommodation: includeAcc, includeFlights }))}`;
-  function download() {
-    const blob = new Blob([JSON.stringify(createSnapshot(trip, { includeAccommodation: includeAcc, includeFlights }), null, 2)], { type: "application/json" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `planet-${trip.destination.name.toLowerCase().replace(/\W+/g, "-")}-${trip.arrivalDate}.json`; a.click(); URL.revokeObjectURL(a.href);
-  }
 
   const renderActivity = (day: ItineraryDay, a: Activity, idx: number) => {
     const sugg = report?.suggestions.find((s) => s.activityId === a.id);
@@ -126,10 +107,10 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
       <li key={a.id} className="activity">
         <div className="activity-time"><Clock size={14} aria-hidden="true" className="muted" /><span>{a.startTime ?? "—"}</span><small>{formatDuration(a.durationMinutes)}</small></div>
         <article className="activity-card">
-          <ActivityThumb category={a.category} placeId={a.placeId} imageRef={a.imageRef} alt={a.title} />
+          {a.venue ? <VenueThumb venue={a.venue} alt={a.venue.name} /> : <ActivityThumb category={a.category} placeId={a.placeId} imageRef={a.imageRef} alt={a.title} />}
           <div className="activity-body">
             <p className="badge-row">
-              <span className="cat-badge"><CategoryOrnament category={a.category} size={18} /><ActivityCategoryIcon category={a.category} size={14} /> {CATEGORY_LABEL[a.category]}</span>
+              <span className="cat-badge"><CategoryOrnament category={a.category} size={18} /><ActivityCategoryIcon category={a.category} size={14} /> {a.meal ? (a.meal === "lunch" ? "Lunch" : "Dinner") : CATEGORY_LABEL[a.category]}</span>
               {a.origin !== "generated" ? <StatusBadge status="user" /> : <StatusBadge status={a.meta.status} />}
               {a.indoor ? <span className="tag"><Home size={12} aria-hidden="true" /> Indoors</span> : a.origin === "generated" ? <span className="tag"><Trees size={12} aria-hidden="true" /> Outdoors</span> : null}
             </p>
@@ -138,7 +119,8 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
             ) : (
               <>
                 <h4>{a.title}</h4>
-                {a.description && <p className="desc">{a.description}</p>}
+                {a.venue ? <p className="desc venue-addr"><MapPin size={14} aria-hidden="true" /> {a.venue.address || "Address unknown"}{a.venue.osmUrl && <> · <a href={a.venue.osmUrl} target="_blank" rel="noopener noreferrer">OpenStreetMap</a></>}{a.venue.source === "manual" && <span className="muted"> · entered manually</span>}</p>
+                  : a.description && <p className="desc">{a.description}</p>}
                 {a.notes && <p className="notes"><Pencil size={14} aria-hidden="true" /> {a.notes}</p>}
                 <ul className="facts">
                   {a.startTime && <li><Clock size={14} aria-hidden="true" /> {a.startTime}</li>}<li><Hourglass size={14} aria-hidden="true" /> {formatDuration(a.durationMinutes)}</li>
@@ -186,7 +168,6 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
         </ul>
         <OrnamentRow />
       </DestinationHero>
-      <PhotoMosaic catalogKey={trip.destination.catalogKey} name={trip.destination.name} />
 
       <section className="panel weather" aria-labelledby="wx-h">
         <div className="panel-head">
@@ -234,7 +215,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
               <div className="empty small"><DestinationMotif size={28} /><p>A free day. Wander, rest, or add something below.</p></div>
             ) : <ol className="activities">{day.activities.map((a, idx) => renderActivity(day, a, idx))}</ol>}
             {i === trip.days.length - 1 && <FlightCard kind="departure" flight={trip.flights.departure} readOnly={readOnly} onSave={(f) => { apply(edit.updateFlights(trip, { ...trip.flights, departure: f }), "Updated departure flight"); setFlightsChanged(true); }} />}
-            {!readOnly && <AddActivity onAdd={(v) => apply(edit.addActivity(trip, day.id, v), `Added “${v.title}”`)} />}
+            {!readOnly && <AddItem dayId={day.id} cityName={trip.destination.name} center={trip.destination.location} base={base} onAdd={(v) => v.kind === "activity" ? apply(edit.addActivity(trip, day.id, v), `Added “${v.title}”`) : apply(edit.addMeal(trip, day.id, v), `Added ${v.meal} at “${v.venue.name}”`)} />}
             </div>
           </section>
         );
@@ -285,9 +266,8 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
               <label className="check"><input type="checkbox" checked={includeFlights} onChange={(e) => setIncludeFlights(e.target.checked)} /> Include my flight details</label>
               <div className="row">
                 <button className="btn btn-small" onClick={() => copy(snapshotUrl(), "snap")}><Copy size={14} aria-hidden="true" /> {copied === "snap" ? "Copied!" : "Copy portable link"}</button>
-                <button className="btn btn-ghost btn-small" onClick={download}><Download size={14} aria-hidden="true" /> Export file</button>
               </div>
-              {copied.endsWith("-fail") && <p className="err">Couldn&apos;t access the clipboard — try Export file instead.</p>}
+              {copied.endsWith("-fail") && <p className="err">Couldn&apos;t access the clipboard — select and copy the link manually.</p>}
             </div>
           </section>
           <section className="panel row between" aria-label="Revise">

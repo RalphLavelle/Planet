@@ -34,7 +34,7 @@ src/services/      container.ts (composition root), trips.ts, editing.ts (pure i
                    providers/ (Weather, CurrencyRate, Directions)
 src/themes/        DestinationTheme config: athens.tsx, istanbul.tsx, neutral.tsx, registry.ts
 src/components/    theme.tsx (DestinationThemeProvider, DestinationHero, DestinationMotif, ThemedSectionDivider), ui.tsx (ActivityCategoryIcon, StatusBadge, ActivityThumb), TripGuide.tsx
-app/               Next.js App Router pages: / , /new (3-step wizard), /trip?id=<id>, /shared (#snapshot), /import
+app/               Next.js App Router pages: / , /new (3-step wizard), /trip?id=<id>, /shared (#snapshot)
 ```
 - **Components never touch storage.** All persistence goes through `getServices()` in `src/services/container.ts`, the single place where implementations are chosen. (`rg localStorage app src/components` returns nothing.)
 - Repository methods are async; storage is resolved lazily so SSR never touches `window`.
@@ -68,7 +68,7 @@ app/               Next.js App Router pages: / , /new (3-step wizard), /trip?id=
 
 ### Sharing
 - **Local guide link** `/trip/?id=<id>` — this browser only (explained in UI).
-- **Portable read-only link** `/shared#<base64url snapshot>` — the itinerary travels inside the URL fragment (never sent to a server). Accommodation and personal notes are stripped unless the user ticks "Include where I'm staying". Recipients can "Save a copy" (new id). Also **Export file** (.json) and `/import`. Snapshots are size-limited and Zod-validated.
+- **Portable read-only link** `/shared#<base64url snapshot>` — the itinerary travels inside the URL fragment (never sent to a server). Accommodation and personal notes are stripped unless the user ticks "Include where I'm staying". The shared view is read-only (no import/save-copy). Snapshots are size-limited and Zod-validated.
 
 ### Visual identity
 `DestinationTheme` = tokens (CSS custom properties), CSS/SVG patterns, divider strip, hero illustration, small motif, sprig. Selection uses structured metadata (`catalogKey`/ISO country), so "Athens, Georgia" gets the neutral theme. Athens: Parthenon-on-hill hero with sun & cypresses, evil-eye (mati) motifs on day headers/nav/badges, Greek-key meander dividers and subtle background, olive sprigs, Aegean/limestone/terracotta/olive palette. Functional icons are Lucide throughout. Add a theme by creating `src/themes/<x>.tsx` and registering it in `registry.ts`.
@@ -95,4 +95,8 @@ The app is fully client-side, so it ships as a static export (`npm run build:sta
 ## Round 5
 - Collapsible days (expand/collapse all, per-trip memory, keyboard accessible) with photo banners and thumbnail strips.
 - Inline-editable day titles; auto titles recompute on move/add/remove, user titles kept, "Auto title" reset.
-- Rich themes for Athens, Istanbul, Rome, Paris, Tokyo (ornaments, patterns, mosaics, illustrated map headers); neutral fallback elsewhere.
+- Rich themes for Athens, Istanbul, Rome, Paris, Tokyo (ornaments, patterns, illustrated map headers); neutral fallback elsewhere.
+
+## Round 6
+- Removed: `/import`, Import nav link, Export-file and "Save a copy" (shared links stay read-only), home destination grid, trip-page photo mosaic.
+- **Add an item → Lunch / Dinner** (`components/AddItem.tsx`, `services/restaurants.ts`): restaurant name is looked up on OSM Nominatim inside a ~15 km box around your base (else the city centre), falling back to "name, city"; only food/drink POIs kept, nearest first, candidate picker when several, manual entry when none. Requests share one ≤1 req/s gate with the geocoder; results cached in localStorage. Thumbnails only from the OSM entry's own `image`/`wikimedia_commons`/`wikidata` (P18) tags via the Commons API with author/licence; otherwise a themed food icon. Venue photos must be `upload.wikimedia.org` (schema-enforced). Defaults: lunch 13:00/75 min, dinner 20:00/105 min, editable; inserted in time order; mini map like other items.

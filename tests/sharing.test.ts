@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createSnapshot, encodeSnapshot, parseSnapshot, tripFromSnapshot } from "@/services/sharing";
+import { createSnapshot, encodeSnapshot, parseSnapshot } from "@/services/sharing";
 import { makeTrip } from "./helpers";
 
 describe("portable snapshots", () => {
@@ -14,12 +14,6 @@ describe("portable snapshots", () => {
       if (r.ok) expect(r.snapshot.trip.days).toEqual(t.days);
     }
     expect(createSnapshot(t, { includeAccommodation: true }).trip.accommodation).toBe("Koukaki");
-  });
-  it("imports as a new trip id", async () => {
-    const t = await makeTrip();
-    const imported = tripFromSnapshot(createSnapshot(t));
-    expect(imported.id).not.toBe(t.id);
-    expect(imported.sharing.mode).toBe("private");
   });
   it("rejects malformed or tampered snapshots", async () => {
     expect(parseSnapshot("garbage!!").ok).toBe(false);

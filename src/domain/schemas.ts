@@ -68,6 +68,28 @@ export const PlaceSchema = z.object({
 });
 export type Place = z.infer<typeof PlaceSchema>;
 
+/** Only Wikimedia-hosted images are ever rendered for venues (licensed, attributable). */
+export const VenuePhotoSchema = z.object({
+  src: z.string().url().refine((u) => u.startsWith("https://upload.wikimedia.org/"), "Venue photos must come from Wikimedia"),
+  title: z.string().max(300), author: z.string().max(300), license: z.string().max(80), licenseUrl: z.string().max(300), sourceUrl: z.string().max(400),
+});
+/** A real place the user looked up (e.g. a restaurant from OpenStreetMap), or a manual entry. */
+export const VenueSchema = z.object({
+  name: z.string().min(1).max(120),
+  address: z.string().max(240).default(""),
+  osmUrl: z.string().url().optional(),
+  source: z.enum(["osm", "manual"]),
+  photo: VenuePhotoSchema.optional(),
+});
+export type Venue = z.infer<typeof VenueSchema>;
+export const MealSchema = z.enum(["lunch", "dinner"]);
+export type Meal = z.infer<typeof MealSchema>;
+/** Sensible defaults; always editable. */
+export const MEAL_DEFAULTS: Record<Meal, { startTime: string; durationMinutes: number }> = {
+  lunch: { startTime: "13:00", durationMinutes: 75 },
+  dinner: { startTime: "20:00", durationMinutes: 105 },
+};
+
 export const ActivitySchema = z.object({
   id: z.string(),
   placeId: z.string().optional(),
@@ -83,6 +105,8 @@ export const ActivitySchema = z.object({
   indoor: z.boolean().default(false),
   meta: SourceMetaSchema,
   origin: z.enum(["generated", "edited", "manual"]),
+  meal: MealSchema.optional(),
+  venue: VenueSchema.optional(),
 });
 export type Activity = z.infer<typeof ActivitySchema>;
 
