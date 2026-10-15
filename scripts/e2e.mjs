@@ -171,10 +171,32 @@ await page.fill("#dest", "Ljubljana"); await page.fill("#arr", "2026-12-01"); aw
 await page.selectOption("#cur", "EUR");
 await page.getByRole("button", { name: "Next" }).click();
 await page.getByRole("button", { name: "Generate itinerary" }).click();
-await page.getByRole("button", { name: "Save my guide" }).click();
+await page.getByRole("button", { name: "Save my guide" }).click({ timeout: 150000 });
 await page.waitForURL(/\/trip\/?\?id=/); await page.waitForTimeout(1500);
 assert((await page.locator(".themed").getAttribute("data-theme")) === "neutral", "unknown destination gets neutral theme");
 await page.screenshot({ path: out("12-guide-neutral-fallback"), fullPage: false });
+
+// Place discovery for unthemed cities (live OSM/Wikipedia)
+for (const [city, cur, stay, shot] of [["Gold Coast", "AUD", "Surfers Paradise", "24"], ["Lisbon", "EUR", "Baixa", "25"]]) {
+  await page.goto(BASE + "/new");
+  await page.fill("#dest", city); await page.fill("#arr", "2026-12-01"); await page.fill("#dep", "2026-12-04");
+  await page.selectOption("#cur", cur); await page.fill("#acc", stay);
+  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Generate itinerary" }).click();
+  if (shot === "24") { await page.locator(".gen-progress").waitFor({ timeout: 10000 }).catch(() => {}); await page.screenshot({ path: out("24-discovery-loading") }); }
+  await page.getByRole("button", { name: "Save my guide" }).waitFor({ timeout: 150000 });
+  const realNotice = await page.getByText("real places found on OpenStreetMap and Wikipedia").count();
+  assert(realNotice > 0, `${city}: draft built from discovered real places`);
+  await page.screenshot({ path: out(`${shot}a-${city.toLowerCase().replace(/ /g, "-")}-preview`), fullPage: true });
+  await page.getByRole("button", { name: "Save my guide" }).click();
+  await page.waitForURL(/\/trip\/?\?id=/); await page.locator(".day").first().waitFor(); await page.waitForTimeout(3000);
+  assert((await page.locator(".themed").first().getAttribute("data-theme")) === "neutral", `${city}: neutral theme`);
+  const photos = await page.locator(".activity .thumb-photo img").count(), acts = await page.locator(".activity").count();
+  log(`${city}: ${acts} activities, ${photos} with Wikimedia photos, hero photo: ${await page.locator(".hero-photo img").count() > 0}, banners: ${await page.locator(".day-banner.has-photo").count()}`);
+  await page.screenshot({ path: out(`${shot}b-${city.toLowerCase().replace(/ /g, "-")}-guide`) });
+  await page.locator(".day").nth(1).scrollIntoViewIfNeeded(); await page.waitForTimeout(2000);
+  await page.screenshot({ path: out(`${shot}c-${city.toLowerCase().replace(/ /g, "-")}-day`) });
+}
 
 // Istanbul theme
 await page.goto(BASE + "/new");

@@ -68,9 +68,13 @@ export const PlaceSchema = z.object({
 });
 export type Place = z.infer<typeof PlaceSchema>;
 
+/** Wikimedia's image hosts (Commons thumbnails are served from either). */
+export const isWikimediaImageUrl = (u: string) => /^https:\/\/(upload|thumb)\.wikimedia\.org\//.test(u);
+/** Drop tracking query params Commons appends to thumbnail URLs. */
+export const cleanWikimediaUrl = (u: string) => u.replace(/\?utm_[^#]*$/, "");
 /** Only Wikimedia-hosted images are ever rendered for venues (licensed, attributable). */
 export const VenuePhotoSchema = z.object({
-  src: z.string().url().refine((u) => u.startsWith("https://upload.wikimedia.org/"), "Venue photos must come from Wikimedia"),
+  src: z.string().url().refine(isWikimediaImageUrl, "Venue photos must come from Wikimedia"),
   title: z.string().max(300), author: z.string().max(300), license: z.string().max(80), licenseUrl: z.string().max(300), sourceUrl: z.string().max(400),
 });
 /** A real place the user looked up (e.g. a restaurant from OpenStreetMap), or a manual entry. */
@@ -107,6 +111,11 @@ export const ActivitySchema = z.object({
   origin: z.enum(["generated", "edited", "manual"]),
   meal: MealSchema.optional(),
   venue: VenueSchema.optional(),
+  /** Licensed Wikimedia photo of this exact place (from discovery); bundled photos are looked up by placeId instead. */
+  photo: VenuePhotoSchema.optional(),
+  /** Where the facts came from, e.g. an OpenStreetMap or Wikipedia URL. */
+  sourceUrl: z.string().url().max(400).optional(),
+  openingHoursNote: z.string().max(200).optional(),
 });
 export type Activity = z.infer<typeof ActivitySchema>;
 
@@ -129,6 +138,8 @@ export const DestinationSchema = z.object({
   timeZone: z.string().optional(),
   localCurrency: CurrencyCodeSchema.optional(),
   catalogKey: z.string().optional(),
+  /** Licensed Wikimedia photo for destinations without bundled imagery (from place discovery). */
+  photo: VenuePhotoSchema.optional(),
 });
 export type Destination = z.infer<typeof DestinationSchema>;
 

@@ -1,4 +1,4 @@
-import type { GeoPoint, Venue } from "@/domain/schemas";
+import { cleanWikimediaUrl, isWikimediaImageUrl, type GeoPoint, type Venue } from "@/domain/schemas";
 import type { KeyValueStore } from "@/repositories/TripRepository";
 import { haversineKm, nominatimThrottle } from "./geocoding";
 
@@ -44,7 +44,7 @@ export function commonsFileFromTag(tag?: string): string | null {
   const t = tag.trim();
   const m = t.match(/^(?:File|Image):(.+)$/i) ?? t.match(/commons\.wikimedia\.org\/wiki\/(?:File|Image):([^?#]+)/i);
   if (m) return decodeURIComponent(m[1]).replace(/_/g, " ");
-  const up = t.match(/^https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^/?#]+)/i);
+  const up = t.match(/^https:\/\/(?:upload|thumb)\.wikimedia\.org\/wikipedia\/commons\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^/?#]+)/i);
   return up ? decodeURIComponent(up[1]).replace(/_/g, " ") : null;
 }
 
@@ -100,8 +100,8 @@ export class OsmRestaurantFinder implements RestaurantFinder {
         const j = (await r.json()) as { query?: { pages?: Record<string, { imageinfo?: { thumburl?: string; descriptionurl?: string; extmetadata?: Record<string, { value?: string }> }[] }> } };
         const info = Object.values(j.query?.pages ?? {})[0]?.imageinfo?.[0];
         const m = info?.extmetadata ?? {};
-        if (info?.thumburl?.startsWith("https://upload.wikimedia.org/")) {
-          photo = { src: info.thumburl, title: file.slice(0, 300), author: (stripHtml(m.Artist?.value) || "Wikimedia Commons contributor").slice(0, 300),
+        if (info?.thumburl && isWikimediaImageUrl(info.thumburl)) {
+          photo = { src: cleanWikimediaUrl(info.thumburl), title: file.slice(0, 300), author: (stripHtml(m.Artist?.value) || "Wikimedia Commons contributor").slice(0, 300),
             license: (stripHtml(m.LicenseShortName?.value) || "see source").slice(0, 80), licenseUrl: (m.LicenseUrl?.value ?? "").slice(0, 300), sourceUrl: (info.descriptionurl ?? "").slice(0, 400) };
         }
       }

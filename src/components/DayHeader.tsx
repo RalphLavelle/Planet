@@ -3,13 +3,13 @@ import { useState } from "react";
 import { Check, ChevronDown, ListChecks, Pencil, RotateCcw, X } from "lucide-react";
 import type { ItineraryDay } from "@/domain/schemas";
 import { formatDay } from "@/lib/dates";
-import { placeImage } from "@/services/images";
+import { activityImage } from "@/services/images";
 import { CategoryOrnament, DestinationMotif } from "./theme";
 import { PhotoCredit } from "./ui";
 
 /** Picks the most evocative photo for a day: first sight/museum/viewpoint with a photo, then any photo. */
 export function dayBannerPhoto(day: ItineraryDay, exclude: Set<string> = new Set()) {
-  const withImg = day.activities.map((a) => ({ a, img: placeImage(a.placeId) })).filter((x) => x.img && !exclude.has(x.img.src));
+  const withImg = day.activities.map((a) => ({ a, img: activityImage(a) })).filter((x) => x.img && !exclude.has(x.img.src));
   return (withImg.find((x) => !["food", "cafe", "nightlife"].includes(x.a.category)) ?? withImg[0])?.img ?? null;
 }
 
@@ -53,7 +53,7 @@ export function DayHeader({ day, index, title, photo = null, weather, collapsed,
               <span className="day-count"><ListChecks size={14} aria-hidden="true" /> {day.activities.length} {day.activities.length === 1 ? "stop" : "stops"}{times.length ? ` · ${times[0]}–${times[times.length - 1]}` : ""}</span>
               <ul className="thumb-strip" aria-label="Stops">
                 {day.activities.slice(0, 6).map((a) => {
-                  const img = placeImage(a.placeId);
+                  const img = activityImage(a);
                   return <li key={a.id} title={a.title}>{img ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={img.src} alt={a.title} loading="lazy" /> : <span className="strip-fallback" role="img" aria-label={a.title}><CategoryOrnament category={a.category} size={20} /></span>}</li>;
                 })}
                 {day.activities.length > 6 && <li className="strip-more">+{day.activities.length - 6}</li>}

@@ -2,8 +2,8 @@
 import type React from "react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Accessibility, ArrowLeft, ArrowRight, BedDouble, CalendarCheck, CalendarDays, Check, Clock, Coins, Footprints, Gauge, Heart, ListChecks, MapPin, PiggyBank, PlaneLanding, PlaneTakeoff, RefreshCw, Salad, SlidersHorizontal, Sparkles, StickyNote, Users } from "lucide-react";
-import { destinationImage, placeImage } from "@/services/images";
+import { Accessibility, ArrowLeft, ArrowRight, BedDouble, CalendarCheck, CalendarDays, Check, Clock, Coins, Footprints, Gauge, Heart, ListChecks, Loader2, MapPin, PiggyBank, PlaneLanding, PlaneTakeoff, RefreshCw, Salad, SlidersHorizontal, Sparkles, StickyNote, Users } from "lucide-react";
+import { activityImage, destinationImage } from "@/services/images";
 import { resolveDestination } from "@/services/itinerary/DemoItineraryGenerator";
 import { PhotoCredit } from "@/components/ui";
 import { CategoryOrnament } from "@/components/theme";
@@ -12,7 +12,7 @@ import { ActivityCategoryIcon } from "@/components/ui";
 import { INTERESTS, PreferencesSchema, TripInputSchema, type Preferences, type Trip } from "@/domain/schemas";
 import { formatDay } from "@/lib/dates";
 import { getServices } from "@/services/container";
-import { generateTrip } from "@/services/trips";
+import { generateTrip, generationNotice } from "@/services/trips";
 import { CATALOG } from "@/services/itinerary/catalog";
 
 const CURRENCIES = ["GBP", "EUR", "USD", "TRY", "JPY", "AUD", "CAD", "CHF", "SEK", "NOK", "DKK"];
@@ -34,6 +34,8 @@ export default function NewTrip() {
   const [draft, setDraft] = useState<Trip | null>(null);
   const [seed, setSeed] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState("");
+  const [notice, setNotice] = useState("");
   const [saveError, setSaveError] = useState("");
 
   // Prefill from ?dest= (destination cards on the home page).
@@ -58,10 +60,12 @@ export default function NewTrip() {
     setBusy(true);
     try {
       const s = getServices();
-      const t = await generateTrip(input, s.generator, nextSeed);
+      setProgress("Drafting your itinerary…");
+      const t = await generateTrip(input, s.generator, nextSeed, setProgress);
+      setNotice(generationNotice(t) ?? "");
       await s.drafts.saveDraft(t);
       setDraft(t); setStep(2);
-    } finally { setBusy(false); }
+    } catch { setNotice("Something went wrong while drafting — please try again."); } finally { setBusy(false); setProgress(""); }
   }
 
   async function save() {
@@ -144,16 +148,20 @@ export default function NewTrip() {
               <button type="button" className="btn btn-ghost" onClick={() => setStep(0)}><ArrowLeft size={18} aria-hidden="true" /> Back</button>
               <button className="btn" type="submit" disabled={busy}><Sparkles size={18} aria-hidden="true" /> {busy ? "Drafting…" : "Generate itinerary"}</button>
             </div>
+            {busy && <p className="notice gen-progress" role="status" aria-live="polite"><Loader2 size={16} className="spin" aria-hidden="true" /> {progress || "Drafting…"}{!resolveDestination(destination || " ").catalog && <span className="muted"> Finding real places can take 10–30 seconds the first time; results are then saved in this browser.</span>}</p>}
           </form>
         )}
 
         {step === 2 && draft && (
           <section aria-label="Preview">
-            <p className="notice">This draft uses <strong>demonstration content</strong>: places and price ranges are illustrative and not verified. Nothing is saved until you confirm. You can edit everything after saving.</p>
+            {draft.generator === "osm-discovery-v1"
+              ? <p className="notice">Places in this draft are <strong>real places found on OpenStreetMap and Wikipedia</strong> near {draft.destination.name}, ranked by how notable they are. Prices and opening hours are unknown unless listed; meal slots without a named place are general suggestions. Nothing is saved until you confirm.</p>
+              : <p className="notice">This draft uses <strong>demonstration content</strong>: places and price ranges are illustrative and not verified. Nothing is saved until you confirm. You can edit everything after saving.</p>}
+            {notice && <p className="notice notice-warn" role="status">{notice}</p>}
             {draft.days.map((d) => (
               <article key={d.id} className="card preview-day">
                 <h3><DestinationMotif size={18} /> {formatDay(d.date)} <span className="muted">· {d.title}</span></h3>
-                <ul className="preview-list">{d.activities.map((a) => { const img = placeImage(a.placeId); return <li key={a.id}><span className="time"><Clock size={12} aria-hidden="true" /> {a.startTime}</span>{img ? /* eslint-disable-next-line @next/next/no-img-element */ <img className="mini-thumb" src={img.src} alt="" loading="lazy" /> : <span className="mini-thumb mini-fallback"><CategoryOrnament category={a.category} size={22} /></span>}<ActivityCategoryIcon category={a.category} /> {a.title}</li>; })}</ul>
+                <ul className="preview-list">{d.activities.map((a) => { const img = activityImage(a); return <li key={a.id}><span className="time"><Clock size={12} aria-hidden="true" /> {a.startTime}</span>{img ? /* eslint-disable-next-line @next/next/no-img-element */ <img className="mini-thumb" src={img.src} alt="" loading="lazy" /> : <span className="mini-thumb mini-fallback"><CategoryOrnament category={a.category} size={22} /></span>}<ActivityCategoryIcon category={a.category} /> {a.title}</li>; })}</ul>
               </article>
             ))}
             <ThemedSectionDivider />

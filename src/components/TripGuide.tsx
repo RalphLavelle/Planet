@@ -13,7 +13,7 @@ import type { RefreshReport } from "@/services/refresh";
 import { createSnapshot, encodeSnapshot } from "@/services/sharing";
 import * as edit from "@/services/editing";
 import { CategoryOrnament, DestinationHero, DestinationMotif, OrnamentRow, ThemeBullet, ThemedSectionDivider, useDestinationTheme } from "./theme";
-import { destinationImage } from "@/services/images";
+import { tripHeroImage } from "@/services/images";
 import { FlightCard } from "./FlightCard";
 import { DayHeader, dayBannerPhotos } from "./DayHeader";
 import { displayDayTitle } from "@/domain/dayTitles";
@@ -70,7 +70,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
   }, [trip.accommodation, trip.destination.name]);
   const [copied, setCopied] = useState("");
   const banners = dayBannerPhotos(trip.days);
-  const heroPhoto = destinationImage(trip.destination.catalogKey);
+  const heroPhoto = tripHeroImage(trip.destination);
   const catalog = trip.destination.catalogKey ? findCatalogDestination(trip.destination.catalogKey) : undefined;
 
   async function refresh() {
@@ -107,7 +107,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
       <li key={a.id} className="activity">
         <div className="activity-time"><Clock size={14} aria-hidden="true" className="muted" /><span>{a.startTime ?? "—"}</span><small>{formatDuration(a.durationMinutes)}</small></div>
         <article className="activity-card">
-          {a.venue ? <VenueThumb venue={a.venue} alt={a.venue.name} /> : <ActivityThumb category={a.category} placeId={a.placeId} imageRef={a.imageRef} alt={a.title} />}
+          {a.venue ? <VenueThumb venue={a.venue} alt={a.venue.name} /> : <ActivityThumb category={a.category} placeId={a.placeId} imageRef={a.imageRef} alt={a.title} photo={a.photo} />}
           <div className="activity-body">
             <p className="badge-row">
               <span className="cat-badge"><CategoryOrnament category={a.category} size={18} /><ActivityCategoryIcon category={a.category} size={14} /> {a.meal ? (a.meal === "lunch" ? "Lunch" : "Dinner") : CATEGORY_LABEL[a.category]}</span>
@@ -121,6 +121,9 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
                 <h4>{a.title}</h4>
                 {a.venue ? <p className="desc venue-addr"><MapPin size={14} aria-hidden="true" /> {a.venue.address || "Address unknown"}{a.venue.osmUrl && <> · <a href={a.venue.osmUrl} target="_blank" rel="noopener noreferrer">OpenStreetMap</a></>}{a.venue.source === "manual" && <span className="muted"> · entered manually</span>}</p>
                   : a.description && <p className="desc">{a.description}</p>}
+                {a.origin === "generated" && a.meta.status !== "demo" && (
+                  <p className="src-line muted">{a.openingHoursNote ?? "Opening hours unknown — check before you go."}{a.sourceUrl && <> · <a href={a.sourceUrl} target="_blank" rel="noopener noreferrer">{a.sourceUrl.includes("wikipedia.org") ? "Wikipedia" : "OpenStreetMap"}</a></>}</p>
+                )}
                 {a.notes && <p className="notes"><Pencil size={14} aria-hidden="true" /> {a.notes}</p>}
                 <ul className="facts">
                   {a.startTime && <li><Clock size={14} aria-hidden="true" /> {a.startTime}</li>}<li><Hourglass size={14} aria-hidden="true" /> {formatDuration(a.durationMinutes)}</li>
@@ -160,7 +163,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
     <div className="guide">
       <DestinationHero eyebrow={`${trip.destination.country ? trip.destination.country + " · " : ""}${theme.tagline}`} title={trip.destination.name}
         photo={heroPhoto ? <figure className="hero-photo">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={heroPhoto.src} alt={`${trip.destination.name}`} /><PhotoCredit credit={heroPhoto} /></figure> : undefined}>
-        <p className="lede">{catalog?.intro ?? `Your personalised guide to ${trip.destination.name}. This destination uses Planet's general template — swap in your own finds as you go.`}</p>
+        <p className="lede">{catalog?.intro ?? (trip.generator === "osm-discovery-v1" ? `Your personalised guide to ${trip.destination.name}, built from real places mapped on OpenStreetMap and described on Wikipedia. Prices and opening hours aren't known unless listed — check before you go.` : `Your personalised guide to ${trip.destination.name}. This destination uses Planet's general template — swap in your own finds as you go.`)}</p>
         <ul className="hero-facts">
           <li><CalendarDays size={16} aria-hidden="true" /> {formatDay(trip.arrivalDate, { day: "numeric", month: "short" })} – {formatDay(trip.departureDate, { day: "numeric", month: "short", year: "numeric" })} · {trip.days.length} day{trip.days.length > 1 ? "s" : ""}</li>
           {trip.accommodation && <li><MapPin size={16} aria-hidden="true" /> Staying in {trip.accommodation}</li>}
@@ -230,7 +233,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
         {mapUrl ? (
           <>
             <iframe className="map" title={`Map of ${trip.destination.name}`} src={services.directions.embedUrl(dayPoints.length ? dayPoints.map((a) => a.location!) : points) ?? mapUrl} loading="lazy" />
-            <p className="source">Map © OpenStreetMap contributors. Pins are approximate demo-catalogue positions; no route times or distances are calculated.</p>
+            <p className="source">Map © OpenStreetMap contributors. {trip.generator === "osm-discovery-v1" ? "Pins are OpenStreetMap positions" : "Pins are approximate demo-catalogue positions"}; no route times are calculated.</p>
           </>
         ) : <div className="empty small"><MapPin size={24} aria-hidden="true" /><p>No coordinates for these activities yet. Use the search links below to find them in your maps app.</p></div>}
         <h3 className="panel-sub"><ListOrdered size={16} aria-hidden="true" /> Stops for this day</h3>

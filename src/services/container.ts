@@ -9,6 +9,7 @@ import type { DirectionsProvider } from "./providers/types";
 import { RefreshService } from "./refresh";
 import { UiPrefs } from "./uiPrefs";
 import { NominatimGeocoder, type Geocoder } from "./geocoding";
+import { OsmPlaceDiscovery } from "./discovery/PlaceDiscovery";
 import { OsmRestaurantFinder, type RestaurantFinder } from "./restaurants";
 
 /**
@@ -39,10 +40,11 @@ export function getServices(): Services {
       trips = new LocalStorageTripRepository();
   }
   const weather = process.env.NEXT_PUBLIC_WEATHER_PROVIDER === "demo" ? new DemoWeatherProvider() : new OpenMeteoWeatherProvider();
+  const ls = () => (typeof window === "undefined" ? null : window.localStorage);
   instance = {
     trips,
     drafts: new SessionStorageDraftRepository(),
-    generator: new DemoItineraryGenerator(),
+    generator: new DemoItineraryGenerator(new OsmPlaceDiscovery(ls), new NominatimGeocoder(ls)),
     directions: new ExternalLinkDirectionsProvider(),
     refresh: new RefreshService(weather, new FrankfurterCurrencyRateProvider(), () => (typeof window === "undefined" ? null : window.localStorage)),
     uiPrefs: new UiPrefs(() => (typeof window === "undefined" ? null : window.localStorage)),

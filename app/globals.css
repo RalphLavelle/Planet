@@ -330,3 +330,5 @@ input[aria-invalid=true] { border-color: #b3261e; }
 .venue-preview p { margin: 2px 0; }
 .venue-addr a { text-decoration: underline; }
 .spin { animation: spin 1s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
+.src-line { font-size: .82rem; margin: 2px 0 6px; } .src-line a { text-decoration: underline; }
+.gen-progress { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: var(--space-3); }

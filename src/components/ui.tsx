@@ -42,8 +42,8 @@ export function PhotoCredit({ credit }: { credit: ImageCredit }) {
 }
 
 /** Image slot: licensed photo when available (via services/images), otherwise a themed illustrated placeholder. */
-export function ActivityThumb({ category, placeId, alt }: { category: ActivityCategory; placeId?: string; imageRef?: string; alt: string }) {
-  const credit = placeImage(placeId);
+export function ActivityThumb({ category, placeId, alt, photo }: { category: ActivityCategory; placeId?: string; imageRef?: string; alt: string; photo?: ImageCredit }) {
+  const credit = photo ?? placeImage(placeId);
   const [failed, setFailed] = useState(false);
   return (
     <div className={`thumb thumb-${category}${credit && !failed ? " thumb-photo" : ""}`}>

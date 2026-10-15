@@ -103,3 +103,13 @@ The app is fully client-side, so it ships as a static export (`npm run build:sta
 
 ## Publishing
 `npm run build:static && python3 scripts/publish-herenow.py` updates the site recorded in `/workspace/planet-herenow.json` (claim token kept outside the repo); `HERENOW_NEW=1` forces a new anonymous site. Every request/file upload retries transient failures (SSL EOF, resets, timeouts, 429/5xx) with exponential backoff. New claim info is written to `/workspace/planet-herenow-claim.txt`, older entries kept under PREVIOUS.
+
+## Place discovery for any city (round 8)
+Cities outside the 5 hand-written catalogues get real places, with no API keys (`src/services/discovery/`):
+1. **Geocode** with Nominatim (shared ≤1 req/s gate), falling back to Photon. City bbox → search radius 2.5–12 km.
+2. **POIs** from Overpass: tourism attraction/museum/gallery/viewpoint/zoo/theme_park/aquarium, beaches, parks/gardens/reserves/historic/places of worship/theatres (with wikidata), markets, plus up to 80 restaurants/cafés and 25 bars. Endpoints tried in turn: overpass-api.de → maps.mail.ru → overpass.private.coffee, 25 s timeout each.
+3. **Wikipedia geosearch** (centre + 4 probes for big cities) boosts matching places. If every Overpass endpoint fails, it becomes the place source, classified by Wikidata "instance of" (settlements, events and organisations are dropped).
+4. **Wikidata** (sitelink count → notability, P18 image, description), **Wikipedia** (2-sentence intro extracts), **Commons** (thumbnail, author, licence; only free licences, only Wikimedia hosts).
+5. Results are cached per destination in localStorage: 14 days, or 1 day if degraded.
+
+The generator ranks places by interests and notability. Each day opens with a highly ranked place (gently biased towards the geocoded base) and then prefers nearby stops; meals are the nearest real restaurant/café. Pace and flight windows still apply. No prices; opening hours only when OSM lists them ("may be outdated"). Meal slots fall back to clearly generic suggestions when there are too few real restaurants. Unknown cities use the neutral theme, with discovered photos for the hero, day banners and cards. If discovery fails, the general template is used and the wizard says why.

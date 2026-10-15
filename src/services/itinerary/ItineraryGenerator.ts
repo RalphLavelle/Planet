@@ -5,7 +5,10 @@ export interface GeneratedItinerary {
   days: ItineraryDay[];
   places: Place[];
   generator: string;
+  /** Non-fatal, user-facing note (e.g. discovery fell back to a template). */
+  notice?: string;
 }
+export interface GenerateOptions { seed?: number; onProgress?: (msg: string) => void }
 
 /**
  * Strategy interface. Implementations: DemoItineraryGenerator (local, deterministic).
@@ -14,5 +17,5 @@ export interface GeneratedItinerary {
  */
 export interface ItineraryGenerator {
   readonly id: string;
-  generate(input: ValidTripInput, opts?: { seed?: number }): Promise<GeneratedItinerary>;
+  generate(input: ValidTripInput, opts?: GenerateOptions): Promise<GeneratedItinerary>;
 }

@@ -7,7 +7,11 @@ import { autoDayTitle } from "@/domain/dayTitles";
 import { ARRIVAL_BUFFER_MIN, DEPARTURE_BUFFER_MIN } from "@/domain/schemas";
 import { newId } from "@/lib/ids";
 import { findCatalogDestination, type CatalogDestination, type CatalogPlace } from "./catalog";
-import type { GeneratedItinerary, ItineraryGenerator } from "./ItineraryGenerator";
+import type { GeneratedItinerary, GenerateOptions, ItineraryGenerator } from "./ItineraryGenerator";
+import type { PlaceDiscovery } from "../discovery/PlaceDiscovery";
+import type { DiscoveredPlace } from "../discovery/osm";
+import { haversineKm, type Geocoder } from "../geocoding";
+import type { GeoPoint } from "@/domain/schemas";
 
 const SOURCE = "Planet demo catalogue";
 
@@ -45,24 +49,61 @@ export function resolveDestination(input: string): { destination: Destination; c
   return { catalog: c, destination: { name: c.name, country: c.country, countryCode: c.countryCode, location: c.location, timeZone: c.timeZone, localCurrency: c.currency, catalogKey: c.key } };
 }
 
+/** Minimum discovered sights before we trust discovery over the generic template. */
+export const MIN_DISCOVERED_SIGHTS = 4;
+type PoolPlace = CatalogPlace & Partial<Pick<DiscoveredPlace, "notability" | "photo" | "sourceUrl" | "osmUrl">>;
+
+/**
+ * Generator: hand-written catalogue for the 5 showcase cities; for any other city, real places from
+ * free/keyless discovery (OSM + Wikipedia/Wikidata), clustered geographically per day; generic template as last resort.
+ */
 export class DemoItineraryGenerator implements ItineraryGenerator {
   readonly id = "demo-local-v1";
+  constructor(private readonly discovery?: PlaceDiscovery, private readonly geocoder?: Geocoder) {}
 
-  async generate(input: ValidTripInput, opts: { seed?: number } = {}): Promise<GeneratedItinerary> {
-    const { destination, catalog } = resolveDestination(input.destination);
+  async generate(input: ValidTripInput, opts: GenerateOptions = {}): Promise<GeneratedItinerary> {
+    const resolved = resolveDestination(input.destination);
+    const catalog = resolved.catalog;
+    let destination = resolved.destination;
+    let pool: PoolPlace[] = catalog?.places ?? genericPlaces(destination.name);
+    let source = SOURCE, status: "demo" | "live" = "demo", generatorId = this.id, retrievedAt: string | undefined, notice: string | undefined;
+    let cluster = false, base: GeoPoint | null = null;
+
+    if (!catalog && this.discovery) {
+      try {
+        const r = await this.discovery.discover(destination.name, { onProgress: opts.onProgress });
+        const sights = r?.places.filter((p) => !p.meal && p.category !== "nightlife" && p.notability > -1) ?? [];
+        if (r && sights.length >= MIN_DISCOVERED_SIGHTS) {
+          destination = { ...r.destination, name: destination.name };
+          const real = r.places.filter((p) => p.notability > -1);
+          const generic = genericPlaces(destination.name);
+          const meals = real.filter((p) => p.meal);
+          // Not enough real restaurants → keep generic, clearly-labelled meal suggestions (no invented names).
+          pool = [...real, ...(meals.length < 4 ? generic.filter((g) => g.meal) : []), ...(real.some((p) => p.category === "nightlife") ? [] : generic.filter((g) => g.category === "nightlife"))];
+          source = r.sources.join(" · "); status = "live"; retrievedAt = r.fetchedAt; generatorId = "osm-discovery-v1"; cluster = true;
+          notice = r.warnings.join(" ") || undefined;
+          if (input.accommodation && this.geocoder) base = await this.geocoder.geocode(`${input.accommodation}, ${destination.name}${destination.country ? ", " + destination.country : ""}`).catch(() => null);
+        } else notice = r ? `Only ${sights.length} notable places found for ${destination.name} — using a general template.` : `Couldn't find “${destination.name}” on OpenStreetMap — using a general template.`;
+      } catch { notice = "Place discovery is unavailable right now — using a general template."; }
+    }
     const prefs = input.preferences;
     const rand = rng(hash(`${destination.name}|${input.arrivalDate}|${input.departureDate}|${prefs.interests.join(",")}|${opts.seed ?? 0}`));
-    const pool = catalog?.places ?? genericPlaces(destination.name);
     const currency = destination.localCurrency;
+    const prefix = cluster ? "osm" : destination.catalogKey ?? "generic";
+    const isGenericKey = (p: PoolPlace) => !p.location && !p.osmUrl;
+    const placeId = (p: CatalogPlace) => `${cluster && isGenericKey(p) ? "generic" : prefix}:${p.key}`;
+    const metaFor = (p: PoolPlace) => cluster && !isGenericKey(p) ? { source, status, retrievedAt } : { source: SOURCE, status: "demo" as const };
 
     const places: Place[] = pool.map((p) => PlaceSchema.parse({
-      id: `${destination.catalogKey ?? "generic"}:${p.key}`, providerId: catalog ? `demo:${catalog.key}:${p.key}` : undefined,
+      id: placeId(p), providerId: catalog ? `demo:${catalog.key}:${p.key}` : p.osmUrl || undefined,
       name: p.name, location: p.location, categories: [p.category], description: p.description,
-      openingHoursNote: p.openingHoursNote, indoor: p.indoor, meta: { source: SOURCE, status: "demo" },
+      openingHoursNote: p.openingHoursNote, indoor: p.indoor, meta: metaFor(p),
     }));
-    const placeId = (p: CatalogPlace) => `${destination.catalogKey ?? "generic"}:${p.key}`;
 
-    const score = (p: CatalogPlace) => p.interests.filter((i) => prefs.interests.includes(i)).length * 3 + (prefs.walking === "low" && p.category === "walk" ? -2 : 0) + rand();
+    const notab = (p: PoolPlace) => Math.min(14, p.notability ?? 0) * 0.6;
+    const memo = new Map<string, number>();
+    const score = (p: PoolPlace) => memo.get(p.key) ?? memo.set(p.key, rawScore(p)).get(p.key)!;
+    const rawScore = (p: PoolPlace) => p.interests.filter((i) => prefs.interests.includes(i)).length * 3 + notab(p) + (prefs.walking === "low" && p.category === "walk" ? -2 : 0) + rand();
     const sights = pool.filter((p) => !p.meal && p.category !== "nightlife" && (p.durationMinutes <= 240 || prefs.pace !== "relaxed"));
     const nightlife = pool.filter((p) => p.category === "nightlife");
     const lunches = pool.filter((p) => p.meal === "lunch" || p.meal === "any");
@@ -70,7 +111,7 @@ export class DemoItineraryGenerator implements ItineraryGenerator {
     const ranked = [...sights].sort((a, b) => score(b) - score(a));
     const used = new Set<string>();
 
-    const toActivity = (p: CatalogPlace, start: string, mult = 1): Activity => {
+    const toActivity = (p: PoolPlace, start: string, mult = 1): Activity => {
       const priced = p.cost[0] >= 0 && currency;
       const m = p.meal ? BUDGET_MULT[prefs.budget] : 1;
       return ActivitySchema.parse({
@@ -78,7 +119,8 @@ export class DemoItineraryGenerator implements ItineraryGenerator {
         startTime: start, durationMinutes: Math.round(p.durationMinutes * mult / 15) * 15 || 15,
         cost: priced ? { min: Math.round(p.cost[0] * m), max: Math.round(p.cost[1] * m), currency, confidence: "illustrative" } : undefined,
         location: p.location, imageRef: `category:${p.category}`, indoor: p.indoor,
-        meta: { source: SOURCE, status: "demo" }, origin: "generated",
+        photo: p.photo, sourceUrl: p.sourceUrl || p.osmUrl || undefined, openingHoursNote: p.openingHoursNote,
+        meta: metaFor(p), origin: "generated",
       });
     };
 
@@ -103,27 +145,38 @@ export class DemoItineraryGenerator implements ItineraryGenerator {
       const nSights = Math.max(1, SIGHT_SLOTS[prefs.pace] - (shortDay ? 1 : 0));
 
       let t = earliest;
+      // Geographic clustering (discovered places): start near the base (or centre), then prefer places near the last stop.
+      // Each day opens with a highly ranked place (gently biased towards the base), then stays in that area.
+      let here: GeoPoint | null = cluster ? base ?? destination.location ?? null : null;
+      let startOfDay = true;
+      const near = (list: PoolPlace[], w0: number) => {
+        if (!here) return list;
+        const w = startOfDay && w0 < 1 ? 0.12 : w0;
+        const k = (p: PoolPlace) => score(p) - (p.location ? haversineKm(here!, p.location) * w : 4);
+        return [...list].sort((a, b) => k(b) - k(a));
+      };
       const fits = (p: CatalogPlace) => toMin(t) >= toMin(earliest) && toMin(t) + Math.round(p.durationMinutes * slowMult) <= toMin(latest);
-      const takeFit = (list: CatalogPlace[], cycle: boolean) => {
+      const takeFit = (list0: PoolPlace[], cycle: boolean, w = 0.8) => {
+        const list = cluster ? near(list0, w) : list0;
         const fresh = list.find((p) => !used.has(p.key) && fits(p));
         if (fresh) { used.add(fresh.key); return fresh; }
         const any = cycle ? list.filter(fits) : [];
         return any.length ? any[Math.floor(rand() * any.length)] : undefined;
       };
-      const add = (p: CatalogPlace | undefined, gap = 30) => { if (!p) return false; const a = toActivity(p, t, slowMult); acts.push(a); t = addMinutes(t, a.durationMinutes + gap); return true; };
+      const add = (p: PoolPlace | undefined, gap = 30) => { if (!p) return false; const a = toActivity(p, t, slowMult); acts.push(a); if (cluster && p.location) { here = p.location; startOfDay = false; } t = addMinutes(t, a.durationMinutes + gap); return true; };
 
       let s = 0;
       const morning = Math.ceil(nSights / 2);
       while (s < morning && toMin(t) < toMin("12:00")) { if (!add(takeFit(ranked, false))) break; s++; }
-      if (toMin(t) <= toMin("14:30")) { if (toMin(t) < toMin("12:30")) t = "13:00"; add(takeFit(lunches, true)); }
+      if (toMin(t) <= toMin("14:30")) { if (toMin(t) < toMin("12:30")) t = "13:00"; add(takeFit(lunches, true, 3)); }
       while (s < nSights && toMin(t) < toMin("18:00")) { if (!add(takeFit(ranked, false))) break; s++; }
       if (toMin(t) < toMin("19:30")) t = "19:30"; else t = addMinutes(t, 15);
-      if (toMin(t) <= toMin("21:30")) add(takeFit(dinners, true));
+      if (toMin(t) <= toMin("21:30")) add(takeFit(dinners, true, 3));
       if (prefs.interests.includes("nightlife") || (prefs.pace === "packed" && rand() > 0.5)) add(takeFit(nightlife, false));
 
       return ItineraryDaySchema.parse({ id: newId("d_"), date, title: autoDayTitle({ activities: acts }, i, dates.length, !!depT), titleMode: "auto", notes: "", activities: acts });
     });
 
-    return { destination, days, places, generator: this.id };
+    return { destination, days, places, generator: generatorId, notice };
   }
 }

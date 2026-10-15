@@ -12,3 +12,8 @@ export function placeImage(placeId?: string): ImageCredit | null { return (place
 export function destinationImage(catalogKey?: string): ImageCredit | null { return (catalogKey && CREDITS[`${catalogKey}:hero`]) || null; }
 export function allImageCredits(): [string, ImageCredit][] { return Object.entries(CREDITS); }
 
+
+/** Photo for an activity: its own discovered Wikimedia photo, else the bundled one for its catalogue place. */
+export function activityImage(a: { photo?: ImageCredit; placeId?: string }): ImageCredit | null { return a.photo ?? placeImage(a.placeId); }
+/** Hero photo: bundled destination photo, else the discovered one. */
+export function tripHeroImage(d: { catalogKey?: string; photo?: ImageCredit }): ImageCredit | null { return destinationImage(d.catalogKey) ?? d.photo ?? null; }
