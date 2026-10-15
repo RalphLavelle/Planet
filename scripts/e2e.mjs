@@ -14,6 +14,7 @@ page.on("pageerror", (e) => errors.push(e.message));
 await page.goto(BASE + "/");
 await page.getByRole("heading", { name: /Your trip, as a travel magazine/ }).waitFor();
 await page.screenshot({ path: out("01-home-empty"), fullPage: true });
+assert((await page.getByRole("button", { name: /Athens demo/ }).count()) === 0 && (await page.locator(".featured").count()) === 0, "no demo button or featured demo card");
 
 // Wizard + validation
 await page.getByRole("link", { name: "Plan a new trip" }).click();

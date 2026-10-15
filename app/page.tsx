@@ -1,20 +1,14 @@
 "use client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowRight, CalendarDays, CloudSun, Compass, Info, Map, MapPin, PenLine, RotateCcw, Share2, Sparkles, Wand2 } from "lucide-react";
+import { ArrowRight, CalendarDays, CloudSun, Info, Map, MapPin, PenLine, RotateCcw, Share2, Sparkles, Wand2 } from "lucide-react";
 import { destinationImage } from "@/services/images";
-import { PhotoCredit } from "@/components/ui";
-import { OrnamentRow, ThemeBullet } from "@/components/theme";
 import { DestinationHero, DestinationThemeProvider, ThemedSectionDivider } from "@/components/theme";
 import { getServices } from "@/services/container";
-import { generateTrip } from "@/services/trips";
 import { resolveDestination } from "@/services/itinerary/DemoItineraryGenerator";
 import type { LoadIssue, TripSummary } from "@/repositories/TripRepository";
 import { formatDay } from "@/lib/dates";
 import { selectTheme } from "@/themes/registry";
-
-function isoIn(days: number) { const d = new Date(); d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10); }
 
 function TripCard({ t }: { t: TripSummary }) {
   const dest = resolveDestination(t.destinationName).destination;
@@ -36,34 +30,9 @@ function TripCard({ t }: { t: TripSummary }) {
   );
 }
 
-function FeaturedAthens({ onTry, busy }: { onTry: () => void; busy: boolean }) {
-  const photo = destinationImage("athens");
-  const dest = resolveDestination("Athens").destination;
-  return (
-    <DestinationThemeProvider destination={dest}>
-      <section className="featured" aria-labelledby="feat-h">
-        {photo && <figure className="featured-photo">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={photo.src} alt="The Acropolis of Athens" /><PhotoCredit credit={photo} /></figure>}
-        <div className="featured-body">
-          <p className="eyebrow">Featured guide</p>
-          <h2 id="feat-h">Athens, the Aegean way</h2>
-          <OrnamentRow size={28} />
-          <ul className="bullets">
-            <li><ThemeBullet /> Sunrise at the Parthenon, before the crowds</li>
-            <li><ThemeBullet /> Meze and tsipouro in Psyrri</li>
-            <li><ThemeBullet /> Golden hour on Lycabettus Hill</li>
-          </ul>
-          <button className="btn" onClick={onTry} disabled={busy}><Compass size={18} aria-hidden="true" /> {busy ? "Creating…" : "Open the Athens demo"}</button>
-        </div>
-      </section>
-    </DestinationThemeProvider>
-  );
-}
-
 export default function Home() {
-  const router = useRouter();
   const [trips, setTrips] = useState<TripSummary[] | null>(null);
   const [issues, setIssues] = useState<LoadIssue[]>([]);
-  const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
 
   const load = useCallback(async () => {
@@ -73,13 +42,6 @@ export default function Home() {
   }, []);
   useEffect(() => { load().catch(() => setTrips([])); }, [load]);
 
-  async function demo() {
-    setBusy(true);
-    const s = getServices();
-    const trip = await generateTrip({ destination: "Athens", arrivalDate: isoIn(7), departureDate: isoIn(10), nativeCurrency: "GBP", accommodation: "Koukaki", preferences: { interests: ["history", "food", "architecture"], pace: "balanced" } }, s.generator);
-    await s.trips.save(trip);
-    router.push(`/trip/?id=${trip.id}`);
-  }
   async function reset() {
     if (!window.confirm("Delete all trips saved in this browser? This cannot be undone.")) return;
     await getServices().trips.clear();
@@ -96,14 +58,11 @@ export default function Home() {
           <p className="lede">Tell Planet where you&apos;re going and what you love. It drafts a day-by-day guide with places, maps, costs and weather — then you shape it, keep it and take it with you.</p>
           <div className="row">
             <Link href="/new" className="btn"><Sparkles size={18} aria-hidden="true" /> Plan a new trip</Link>
-            <button className="btn btn-ghost" onClick={demo} disabled={busy}><Compass size={18} aria-hidden="true" /> {busy ? "Creating…" : "Try the Athens demo"}</button>
           </div>
         </DestinationHero>
-
-        <FeaturedAthens onTry={demo} busy={busy} />
         <ThemedSectionDivider label="Your trips" icon={<Map size={20} aria-hidden="true" />} />
         {trips === null ? <p className="muted">Loading your trips…</p> : trips.length === 0 ? (
-          <div className="empty"><Map size={28} aria-hidden="true" /><p>No trips yet. Plan one or try the Athens demo.</p></div>
+          <div className="empty"><Map size={28} aria-hidden="true" /><p>No trips yet. <Link href="/new">Plan your first trip</Link>.</p></div>
         ) : <ul className="trip-grid">{trips.map((t) => <TripCard key={t.id} t={t} />)}</ul>}
         {issues.length > 0 && <p className="notice notice-warn" role="status">{issues.length} saved record(s) could not be read and were skipped ({issues[0].reason}). Use “Reset” below to clear them.</p>}
         {msg && <p className="notice" role="status">{msg}</p>}
