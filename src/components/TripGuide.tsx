@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowDown, ArrowUp, CalendarDays, ChevronsDownUp, ChevronsUpDown, Clock, Droplets, Hourglass, Home, Map as MapIcon, Share2, Trees, Sparkles, ListOrdered, CloudRain, CloudSun, Copy, ExternalLink, Lightbulb, Link2, MapPin, Navigation, Pencil, Plus,
-  RefreshCw, Sun, Thermometer, Trash2, Wallet,
+  PlaneLanding, PlaneTakeoff, RefreshCw, Sun, Thermometer, Trash2, Wallet,
 } from "lucide-react";
 import type { Activity, ItineraryDay, Trip } from "@/domain/schemas";
 import { convertEstimate, formatEstimate, sumEstimates } from "@/domain/money";
@@ -12,9 +12,10 @@ import { findCatalogDestination } from "@/services/itinerary/catalog";
 import type { RefreshReport } from "@/services/refresh";
 import { createSnapshot, encodeSnapshot } from "@/services/sharing";
 import * as edit from "@/services/editing";
-import { CategoryOrnament, DestinationHero, DestinationMotif, OrnamentRow, ThemeBullet, ThemedSectionDivider, useDestinationTheme } from "./theme";
+import { CategoryOrnament, DestinationHero, DestinationMotif, OrnamentRow, ThemeBullet, useDestinationTheme } from "./theme";
 import { tripHeroImage } from "@/services/images";
 import { FlightCard } from "./FlightCard";
+import { Collapsible } from "./Collapsible";
 import { DayHeader, dayBannerPhotos } from "./DayHeader";
 import { displayDayTitle } from "@/domain/dayTitles";
 import { MiniMap } from "./MiniMap";
@@ -54,8 +55,12 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
   const [includeFlights, setIncludeFlights] = useState(false);
   const [flightsChanged, setFlightsChanged] = useState(false);
   const [base, setBase] = useState<GeoPoint | null>(null);
-  const [collapsed, setCollapsed] = useState<string[]>([]);
-  useEffect(() => { services.uiPrefs.getCollapsedDays(trip.id).then(setCollapsed); // eslint-disable-next-line react-hooks/exhaustive-deps
+  const [collapsed, setCollapsed] = useState<string[]>(() => trip.days.slice(1).map((d) => d.id)); // first day open by default
+  useEffect(() => {
+    let live = true;
+    services.uiPrefs.hasCollapsedDays(trip.id).then(async (has) => { const ids = has ? await services.uiPrefs.getCollapsedDays(trip.id) : trip.days.slice(1).map((d) => d.id); if (live) setCollapsed(ids); });
+    return () => { live = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip.id]);
   const isCollapsed = (id: string) => collapsed.includes(id);
   const persistCollapsed = (ids: string[]) => { setCollapsed(ids); services.uiPrefs.setCollapsedDays(trip.id, ids); };
@@ -92,6 +97,14 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
   const dayPoints = activeDayObj?.activities.filter((a) => a.location) ?? [];
 
   const apply = (next: Trip, label: string) => onChange?.(next, label);
+  const flightPanel = (kind: "arrival" | "departure") => {
+    const flight = trip.flights[kind];
+    const card = <FlightCard kind={kind} flight={flight} readOnly={readOnly} onSave={(f) => { apply(edit.updateFlights(trip, { ...trip.flights, [kind]: f }), `Updated ${kind} flight`); setFlightsChanged(true); }} />;
+    if (!(flight?.number || flight?.time)) return card;
+    const Icon = kind === "arrival" ? PlaneLanding : PlaneTakeoff;
+    const summary = [flight.number, flight.time ? `${kind === "arrival" ? "lands" : "departs"} ${flight.time}` : ""].filter(Boolean).join(" · ");
+    return <Collapsible id={`flight-${kind}`} scope={trip.id} level={3} className="flight-collapsible" icon={<Icon size={20} />} title={kind === "arrival" ? "Arrival flight" : "Departure flight"} summary={summary}>{card}</Collapsible>;
+  };
 
   async function copy(text: string, which: string) {
     try { await navigator.clipboard.writeText(text); setCopied(which); } catch { setCopied(which + "-fail"); }
@@ -119,11 +132,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
             ) : (
               <>
                 <h4>{a.title}</h4>
-                {a.venue ? <p className="desc venue-addr"><MapPin size={14} aria-hidden="true" /> {a.venue.address || "Address unknown"}{a.venue.osmUrl && <> · <a href={a.venue.osmUrl} target="_blank" rel="noopener noreferrer">OpenStreetMap</a></>}{a.venue.source === "manual" && <span className="muted"> · entered manually</span>}</p>
-                  : a.description && <p className="desc">{a.description}</p>}
-                {a.origin === "generated" && a.meta.status !== "demo" && (
-                  <p className="src-line muted">{a.openingHoursNote ?? "Opening hours unknown — check before you go."}{a.sourceUrl && <> · <a href={a.sourceUrl} target="_blank" rel="noopener noreferrer">{a.sourceUrl.includes("wikipedia.org") ? "Wikipedia" : "OpenStreetMap"}</a></>}</p>
-                )}
+                {a.venue && <p className="desc venue-addr"><MapPin size={14} aria-hidden="true" /> {a.venue.address || "Address unknown"}{a.venue.osmUrl && <> · <a href={a.venue.osmUrl} target="_blank" rel="noopener noreferrer">OpenStreetMap</a></>}{a.venue.source === "manual" && <span className="muted"> · entered manually</span>}</p>}
                 {a.notes && <p className="notes"><Pencil size={14} aria-hidden="true" /> {a.notes}</p>}
                 <ul className="facts">
                   {a.startTime && <li><Clock size={14} aria-hidden="true" /> {a.startTime}</li>}<li><Hourglass size={14} aria-hidden="true" /> {formatDuration(a.durationMinutes)}</li>
@@ -131,7 +140,15 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
                     : a.origin === "generated" ? <li className="muted"><Wallet size={14} aria-hidden="true" /> Cost unknown</li> : null}
                   {a.location && <li><a href={services.directions.directionsUrl(a.location, trip.accommodation ? `${trip.accommodation}, ${trip.destination.name}` : undefined)} target="_blank" rel="noopener noreferrer"><Navigation size={14} aria-hidden="true" /> Directions<span className="sr-only"> to {a.title} (opens Google Maps)</span></a></li>}
                 </ul>
-                {a.location && <MiniMap stop={a.location} base={base} accent={theme.tokens.secondary} />}
+                {(!a.venue && a.description) || (a.origin === "generated" && a.meta.status !== "demo") || a.location ? (
+                  <Collapsible id={`act-${a.id}`} scope={trip.id} level={5} variant="inline" title="Details" summary={a.venue ? undefined : a.description ? a.description.slice(0, 70) + (a.description.length > 70 ? "…" : "") : a.location ? "Map, opening hours" : undefined}>
+                    {!a.venue && a.description && <p className="desc">{a.description}</p>}
+                    {a.origin === "generated" && a.meta.status !== "demo" && (
+                      <p className="src-line muted">{a.openingHoursNote ?? "Opening hours unknown — check before you go."}{a.sourceUrl && <> · <a href={a.sourceUrl} target="_blank" rel="noopener noreferrer">{a.sourceUrl.includes("wikipedia.org") ? "Wikipedia" : "OpenStreetMap"}</a></>}</p>
+                    )}
+                    {a.location && <MiniMap stop={a.location} base={base} accent={theme.tokens.secondary} />}
+                  </Collapsible>
+                ) : null}
                 {sugg && !readOnly && (
                   <div className="suggest" role="note"><CloudRain size={16} aria-hidden="true" /> {sugg.reason}{swapTitle ? <> Swap with <strong>{swapTitle}</strong>?</> : null}
                     {sugg.swapWithActivityId && <button className="btn btn-small btn-ghost" onClick={() => apply(edit.swapActivities(trip, a.id, sugg.swapWithActivityId!), `Swapped “${a.title}” for “${swapTitle}”`)}>Swap</button>}
@@ -172,9 +189,10 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
         <OrnamentRow />
       </DestinationHero>
 
-      <section className="panel weather" aria-labelledby="wx-h">
+      <Collapsible id="weather" scope={trip.id} icon={<Thermometer size={20} />} title="Weather & currency"
+        summary={report?.weather.data?.length ? `${report.weather.data.length}-day forecast${report.rate?.data ? ` · 1 ${report.rate.data.from} = ${report.rate.data.value.toFixed(report.rate.data.value < 1 ? 4 : 2)} ${report.rate.data.to}` : ""}` : report ? "No forecast available" : "Fetching forecast…"}>
+        <div className="weather">
         <div className="panel-head">
-          <h2 id="wx-h"><Thermometer size={18} aria-hidden="true" /> Weather</h2>
           <div className="row">
             {report ? <StatusBadge status={report.weather.status} at={report.weather.retrievedAt} stale={report.weather.stale} /> : <span className="status">Loading…</span>}
             <button className="btn btn-ghost btn-small" onClick={refresh} disabled={refreshing} aria-label="Refresh weather and exchange rates"><RefreshCw size={14} aria-hidden="true" className={refreshing ? "spin" : ""} /> {refreshing ? "Updating…" : "Update"}</button>
@@ -185,7 +203,8 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
         ) : report ? <p className="muted">No forecast available{report.weather.error ? ` — ${report.weather.error}` : ""}. {report.weather.source}</p> : <p className="muted">Fetching forecast…</p>}
         <p className="source">Source: {report?.weather.source ?? "—"}{report?.rate ? <> · Currency: {report.rate.data ? `1 ${report.rate.data.from} = ${report.rate.data.value.toFixed(report.rate.data.value < 1 ? 4 : 2)} ${report.rate.data.to} (${report.rate.status}, ${report.rate.data.asOf})` : `conversion unavailable (${report.rate.error ?? report.rate.source})`}</> : null}</p>
         {!!report?.suggestions.length && !readOnly && <p className="notice notice-warn"><CloudRain size={16} aria-hidden="true" /> Rain may affect {report.suggestions.length} outdoor plan(s). Suggestions are shown on those activities — nothing has been changed.</p>}
-      </section>
+        </div>
+      </Collapsible>
 
       <nav className="day-nav" aria-label="Days">
         {trip.days.map((d, i) => (
@@ -212,20 +231,20 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
               onRename={(t) => apply(edit.renameDay(trip, day.id, t), t.trim() ? `Renamed day ${i + 1}` : `Day ${i + 1} title reset`)}
               onReset={() => apply(edit.resetDayTitle(trip, day.id), `Day ${i + 1} title reset to automatic`)} />
             <div id={`day-body-${day.id}`} className="day-body" hidden={isCollapsed(day.id)}>
-            {i === 0 && <FlightCard kind="arrival" flight={trip.flights.arrival} readOnly={readOnly} onSave={(f) => { apply(edit.updateFlights(trip, { ...trip.flights, arrival: f }), "Updated arrival flight"); setFlightsChanged(true); }} />}
+            {i === 0 && flightPanel("arrival")}
             {i === 0 && flightsChanged && !readOnly && <p className="notice notice-warn">Flight times changed. Your plans haven&apos;t been moved. {onRegenerate && <button className="btn btn-small btn-ghost" onClick={() => { setFlightsChanged(false); onRegenerate(); }}>Refit itinerary to flights</button>}</p>}
             {day.activities.length === 0 ? (
               <div className="empty small"><DestinationMotif size={28} /><p>A free day. Wander, rest, or add something below.</p></div>
             ) : <ol className="activities">{day.activities.map((a, idx) => renderActivity(day, a, idx))}</ol>}
-            {i === trip.days.length - 1 && <FlightCard kind="departure" flight={trip.flights.departure} readOnly={readOnly} onSave={(f) => { apply(edit.updateFlights(trip, { ...trip.flights, departure: f }), "Updated departure flight"); setFlightsChanged(true); }} />}
+            {i === trip.days.length - 1 && flightPanel("departure")}
             {!readOnly && <AddItem dayId={day.id} cityName={trip.destination.name} center={trip.destination.location} base={base} onAdd={(v) => v.kind === "activity" ? apply(edit.addActivity(trip, day.id, v), `Added “${v.title}”`) : apply(edit.addMeal(trip, day.id, v), `Added ${v.meal} at “${v.venue.name}”`)} />}
             </div>
           </section>
         );
       })}
 
-      <ThemedSectionDivider label="Map & directions" icon={<MapIcon size={20} aria-hidden="true" />} />
-      <section className="panel map-panel" aria-label="Map">
+      <Collapsible id="map" scope={trip.id} icon={<MapIcon size={20} />} title="Map & directions" summary={`${points.length} pinned stop${points.length === 1 ? "" : "s"} · open in Maps`}>
+        <div className="map-panel">
         <div className="map-header" aria-hidden="true"><theme.HeroArt /></div>
         <div className="row tabs" role="group" aria-label="Map day">
           {trip.days.map((d, i) => <button key={d.id} className={`chip ${d.id === activeDayObj?.id ? "on" : ""}`} aria-pressed={d.id === activeDayObj?.id} onClick={() => setActiveDay(d.id)}>Day {i + 1}</button>)}
@@ -245,18 +264,20 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
             </li>
           ))}
         </ol>
-      </section>
+        </div>
+      </Collapsible>
 
-      <ThemedSectionDivider label="Good to know" icon={<Lightbulb size={20} aria-hidden="true" />} />
-      <section className="panel tips" aria-label="Travel tips">
+      <Collapsible id="tips" scope={trip.id} icon={<Lightbulb size={20} />} title="Good to know" summary="Local tips">
+        <div className="tips">
         <ul>{(catalog?.tips ?? ["Check official sites for opening hours and prices before you go.", "Keep a photo of your passport and booking confirmations offline.", "Learn a few words of the local language — it goes a long way."]).map((t) => <li key={t}><ThemeBullet size={16} /> {t}</li>)}</ul>
         <p className="source">Tips from the Planet demo catalogue · general guidance, not live information.</p>
-      </section>
+        </div>
+      </Collapsible>
 
       {!readOnly && (
         <>
-          <ThemedSectionDivider label="Share & keep" icon={<Share2 size={20} aria-hidden="true" />} />
-          <section className="panel share" aria-label="Sharing">
+          <Collapsible id="share" scope={trip.id} icon={<Share2 size={20} />} title="Share & keep" summary="Links and regenerate">
+            <div className="share">
             <div className="share-col">
               <h3><Link2 size={16} aria-hidden="true" /> Local guide link</h3>
               <p className="muted">Reopens this trip <strong>in this browser on this device only</strong>. Sending it to someone else won&apos;t show them anything.</p>
@@ -272,11 +293,12 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
               </div>
               {copied.endsWith("-fail") && <p className="err">Couldn&apos;t access the clipboard — select and copy the link manually.</p>}
             </div>
-          </section>
-          <section className="panel row between" aria-label="Revise">
+            </div>
+            <div className="row between revise">
             <p className="muted"><Sparkles size={16} aria-hidden="true" /> Want a fresh take? Regenerating keeps anything you&apos;ve added or edited.</p>
             {onRegenerate && <button className="btn btn-ghost" onClick={onRegenerate}><RefreshCw size={16} aria-hidden="true" /> Regenerate itinerary</button>}
-          </section>
+            </div>
+          </Collapsible>
           <p className="source">Last edited {relativeTime(trip.updatedAt)} · generated by {trip.generator}</p>
         </>
       )}

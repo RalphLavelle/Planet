@@ -3,7 +3,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowRight, CalendarDays, CloudSun, Info, Map, MapPin, PenLine, RotateCcw, Share2, Sparkles, Wand2 } from "lucide-react";
 import { destinationImage } from "@/services/images";
-import { DestinationThemeProvider, ThemedSectionDivider } from "@/components/theme";
+import { DestinationThemeProvider } from "@/components/theme";
+import { Collapsible } from "@/components/Collapsible";
 import { getServices } from "@/services/container";
 import { resolveDestination } from "@/services/itinerary/DemoItineraryGenerator";
 import type { LoadIssue, TripSummary } from "@/repositories/TripRepository";
@@ -75,26 +76,28 @@ export default function Home() {
     <DestinationThemeProvider>
       <HomeHero />
       <div className="page">
-        <ThemedSectionDivider label="Your trips" icon={<Map size={20} aria-hidden="true" />} />
-        {trips === null ? <p className="muted">Loading your trips…</p> : trips.length === 0 ? (
-          <div className="empty"><Map size={28} aria-hidden="true" /><p>No trips yet. <Link href="/new">Plan your first trip</Link>.</p></div>
-        ) : <ul className="trip-grid">{trips.map((t) => <TripCard key={t.id} t={t} />)}</ul>}
-        {issues.length > 0 && <p className="notice notice-warn" role="status">{issues.length} saved record(s) could not be read and were skipped ({issues[0].reason}). Use “Reset” below to clear them.</p>}
-        {msg && <p className="notice" role="status">{msg}</p>}
+        <Collapsible id="trips" scope="home" defaultOpen icon={<Map size={20} />} title="Your trips" summary={trips === null ? "Loading…" : `${trips.length} saved in this browser`}>
+          {trips === null ? <p className="muted">Loading your trips…</p> : trips.length === 0 ? (
+            <div className="empty"><Map size={28} aria-hidden="true" /><p>No trips yet. <Link href="/new">Plan your first trip</Link>.</p></div>
+          ) : <ul className="trip-grid">{trips.map((t) => <TripCard key={t.id} t={t} />)}</ul>}
+          {issues.length > 0 && <p className="notice notice-warn" role="status">{issues.length} saved record(s) could not be read and were skipped ({issues[0].reason}). Use “Reset” in “Where your trips live” to clear them.</p>}
+          {msg && <p className="notice" role="status">{msg}</p>}
+        </Collapsible>
 
-        <section className="features" aria-label="How it works">
-          <div><span className="feature-icon"><PenLine size={22} aria-hidden="true" /></span><h3>1 · Tell us the basics</h3><p>Destination, dates, currency and whatever preferences you care to share.</p></div>
-          <div><span className="feature-icon"><Wand2 size={22} aria-hidden="true" /></span><h3>2 · Review the draft</h3><p>A varied, paced itinerary built around your interests — preview before saving.</p></div>
-          <div><span className="feature-icon"><Share2 size={22} aria-hidden="true" /></span><h3>3 · Make it yours</h3><p>Edit, reorder, move between days, add your own plans. Everything autosaves.</p></div>
-        </section>
+        <Collapsible id="how" scope="home" icon={<Wand2 size={20} />} title="How it works" summary="Tell us the basics, review the draft, make it yours">
+          <section className="features" aria-label="How it works">
+            <div><span className="feature-icon"><PenLine size={22} aria-hidden="true" /></span><h3>1 · Tell us the basics</h3><p>Destination, dates, currency and whatever preferences you care to share.</p></div>
+            <div><span className="feature-icon"><Wand2 size={22} aria-hidden="true" /></span><h3>2 · Review the draft</h3><p>A varied, paced itinerary built around your interests — preview before saving.</p></div>
+            <div><span className="feature-icon"><Share2 size={22} aria-hidden="true" /></span><h3>3 · Make it yours</h3><p>Edit, reorder, move between days, add your own plans. Everything autosaves.</p></div>
+          </section>
+        </Collapsible>
 
-        <aside className="notice" aria-label="About storage">
-          <Info size={18} aria-hidden="true" />
-          <div>
-            <strong>Where your trips live.</strong> Trips are saved in this browser&apos;s local storage on this device only. Clearing browser data deletes them, they don&apos;t sync to other devices, and storage isn&apos;t encrypted — don&apos;t store confidential details. To share a guide, use the portable snapshot link on a trip page.
-            <div className="row" style={{ marginTop: 8 }}><button className="btn btn-ghost btn-small" onClick={reset}><RotateCcw size={16} aria-hidden="true" /> Reset — delete all local trips</button></div>
-          </div>
-        </aside>
+        <Collapsible id="storage" scope="home" icon={<Info size={20} />} title="Where your trips live" summary="Saved in this browser only">
+          <aside aria-label="About storage">
+            <p>Trips are saved in this browser&apos;s local storage on this device only. Clearing browser data deletes them, they don&apos;t sync to other devices, and storage isn&apos;t encrypted — don&apos;t store confidential details. To share a guide, use the portable snapshot link on a trip page.</p>
+            <div className="row"><button className="btn btn-ghost btn-small" onClick={reset}><RotateCcw size={16} aria-hidden="true" /> Reset — delete all local trips</button></div>
+          </aside>
+        </Collapsible>
       </div>
     </DestinationThemeProvider>
   );

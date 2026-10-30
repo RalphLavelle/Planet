@@ -7,6 +7,7 @@ import { activityImage, destinationImage } from "@/services/images";
 import { resolveDestination } from "@/services/itinerary/DemoItineraryGenerator";
 import { PhotoCredit } from "@/components/ui";
 import { CategoryOrnament } from "@/components/theme";
+import { Collapsible } from "@/components/Collapsible";
 import { DestinationHero, DestinationMotif, DestinationThemeProvider, ThemedSectionDivider } from "@/components/theme";
 import { ActivityCategoryIcon } from "@/components/ui";
 import { INTERESTS, PreferencesSchema, TripInputSchema, type Preferences, type Trip } from "@/domain/schemas";
@@ -37,6 +38,8 @@ export default function NewTrip() {
   const [progress, setProgress] = useState("");
   const [notice, setNotice] = useState("");
   const [saveError, setSaveError] = useState("");
+  const [flightsOpen, setFlightsOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   // Prefill from ?dest= (destination cards on the home page).
   useEffect(() => { const d = new URLSearchParams(window.location.search).get("dest"); if (d) setDestination(d.slice(0, 120)); }, []);
@@ -115,8 +118,10 @@ export default function NewTrip() {
               <div className="field"><label htmlFor="acc"><BedDouble size={15} aria-hidden="true" /> Staying in (optional)</label><input id="acc" value={accommodation} onChange={(e) => setAccommodation(e.target.value)} placeholder="Neighbourhood or hotel name" maxLength={200} />
                 <p className="help">A general area is fine. Never included in shared links unless you choose.</p></div>
             </div>
-            <fieldset className="flight-fields">
-              <legend><PlaneLanding size={15} aria-hidden="true" /> Flights (optional)</legend>
+            <Collapsible id="flights" level={3} variant="inline" lazy={false} icon={<PlaneLanding size={18} />} title="Flights (optional)"
+              summary={arrNum || arrTime || depNum || depTime ? [arrNum && `in ${arrNum}`, depNum && `out ${depNum}`].filter(Boolean).join(" · ") || "Times added" : "Plan around your arrival and departure times"}
+              open={flightsOpen || !!errors.flights} onOpenChange={setFlightsOpen}>
+              <div className="form-stack">
               <p className="help">We use these times to start day one after you land and finish the last day in time for the airport. Times are local; nothing is looked up online.</p>
               <div className="grid2">
                 <div className="field"><label htmlFor="arr-fn"><PlaneLanding size={15} aria-hidden="true" /> Arrival flight</label><input id="arr-fn" value={arrNum} onChange={(e) => setArrNum(e.target.value)} placeholder="e.g. A3 601" maxLength={8} aria-invalid={!!errors["flights.arrival.number"]} />{errors["flights.arrival.number"] && <p className="err">{errors["flights.arrival.number"]}</p>}</div>
@@ -125,7 +130,8 @@ export default function NewTrip() {
                 <div className="field"><label htmlFor="dep-ft">Takes off at</label><input id="dep-ft" type="time" value={depTime} onChange={(e) => setDepTime(e.target.value)} /></div>
               </div>
               {errors.flights && <p className="err" role="alert">{errors.flights}</p>}
-            </fieldset>
+              </div>
+            </Collapsible>
             <div className="row end"><button className="btn" type="submit">Next <ArrowRight size={18} aria-hidden="true" /></button></div>
           </form>
         )}
@@ -137,6 +143,8 @@ export default function NewTrip() {
             </fieldset>
             {seg("budget", <><PiggyBank size={15} aria-hidden="true" /> Budget</>, ["shoestring", "moderate", "comfortable", "luxury"])}
             {seg("pace", <><Gauge size={15} aria-hidden="true" /> Daily pace</>, ["relaxed", "balanced", "packed"])}
+            <Collapsible id="more-prefs" level={3} variant="inline" lazy={false} icon={<SlidersHorizontal size={18} />} title="More about you (optional)" summary="Walking, travelling as, diet, accessibility, notes" open={moreOpen} onOpenChange={setMoreOpen}>
+              <div className="form-stack">
             {seg("walking", <><Footprints size={15} aria-hidden="true" /> Walking tolerance</>, ["low", "medium", "high"])}
             {seg("party", <><Users size={15} aria-hidden="true" /> Travelling as</>, ["solo", "couple", "family", "group"])}
             <div className="grid2">
@@ -144,6 +152,8 @@ export default function NewTrip() {
               <div className="field"><label htmlFor="access"><Accessibility size={15} aria-hidden="true" /> Accessibility</label><input id="access" value={prefs.accessibility} maxLength={200} onChange={(e) => setPrefs({ ...prefs, accessibility: e.target.value })} placeholder="e.g. step-free routes" /></div>
             </div>
             <div className="field"><label htmlFor="notes"><StickyNote size={15} aria-hidden="true" /> Anything else?</label><textarea id="notes" rows={3} maxLength={1000} value={prefs.notes} onChange={(e) => setPrefs({ ...prefs, notes: e.target.value })} /></div>
+              </div>
+            </Collapsible>
             <div className="row between">
               <button type="button" className="btn btn-ghost" onClick={() => setStep(0)}><ArrowLeft size={18} aria-hidden="true" /> Back</button>
               <button className="btn" type="submit" disabled={busy}><Sparkles size={18} aria-hidden="true" /> {busy ? "Drafting…" : "Generate itinerary"}</button>
@@ -159,10 +169,9 @@ export default function NewTrip() {
               : <p className="notice">This draft uses <strong>demonstration content</strong>: places and price ranges are illustrative and not verified. Nothing is saved until you confirm. You can edit everything after saving.</p>}
             {notice && <p className="notice notice-warn" role="status">{notice}</p>}
             {draft.days.map((d) => (
-              <article key={d.id} className="card preview-day">
-                <h3><DestinationMotif size={18} /> {formatDay(d.date)} <span className="muted">· {d.title}</span></h3>
+              <Collapsible key={d.id} id={`preview-${d.id}`} level={3} defaultOpen={d.id === draft.days[0].id} className="preview-day" icon={<DestinationMotif size={18} />} title={formatDay(d.date)} summary={`${d.title} · ${d.activities.length} stops`}>
                 <ul className="preview-list">{d.activities.map((a) => { const img = activityImage(a); return <li key={a.id}><span className="time"><Clock size={12} aria-hidden="true" /> {a.startTime}</span>{img ? /* eslint-disable-next-line @next/next/no-img-element */ <img className="mini-thumb" src={img.src} alt="" loading="lazy" /> : <span className="mini-thumb mini-fallback"><CategoryOrnament category={a.category} size={22} /></span>}<ActivityCategoryIcon category={a.category} /> {a.title}</li>; })}</ul>
-              </article>
+              </Collapsible>
             ))}
             <ThemedSectionDivider />
             {saveError && <p className="err" role="alert">{saveError}</p>}
