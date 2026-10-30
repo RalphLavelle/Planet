@@ -429,3 +429,4 @@ input[aria-invalid=true] { border-color: #b3261e; }
 .activity .facts { gap: var(--space-1) var(--space-3); }
 .activity .facts li { display: flex; flex-wrap: wrap; align-items: center; gap: 0 5px; }
 .item-editor .grid2 { grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.item-editor .grid-day { grid-template-columns: 1.5fr 1fr; }

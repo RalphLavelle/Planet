@@ -59,7 +59,7 @@ describe("ItemEditor", () => {
     const html = renderToStaticMarkup(h(ItemEditor, { trip: t, dayId: t.days[0].id, activity: a, onSave: () => {}, onDelete: () => {}, onCancel: () => {} }));
     expect(html).toContain(`value="${a.title.replace(/&/g, "&amp;")}"`);
     expect(html).toContain("Day 1");
-    expect(html).toContain(`1 of ${t.days[0].activities.length} (first)`);
+    expect(html).toContain(`1 of ${t.days[0].activities.length}`);
     for (const label of ["Title", "Start time", "Duration (min)", "Day", "Order in day", "Your notes", "Save", "Cancel", "Delete"]) expect(html).toContain(label);
     expect(html).toMatch(/<form[^>]*aria-label="Edit /);
   });

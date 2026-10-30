@@ -44,14 +44,14 @@ export function ItemEditor({ trip, dayId, activity: a, onSave, onDelete, onCance
         <div className="field"><label htmlFor={uid("s")}>Start time</label><input id={uid("s")} type="time" value={time} onChange={(e) => setTime(e.target.value)} /></div>
         <div className="field"><label htmlFor={uid("d")}>Duration (min)</label><input id={uid("d")} type="number" min={5} max={1440} step={5} value={dur} onChange={(e) => setDur(Number(e.target.value))} /></div>
       </div>
-      <div className="grid2">
+      <div className="grid2 grid-day">
         <div className="field"><label htmlFor={uid("day")}>Day</label>
           <select id={uid("day")} value={toDay} onChange={(e) => { setToDay(e.target.value); setPos(positionCount(trip, dayId, e.target.value)); }}>
-            {trip.days.map((d, i) => <option key={d.id} value={d.id}>Day {i + 1} · {formatDay(d.date, { weekday: "short", day: "numeric", month: "short" })}</option>)}
+            {trip.days.map((d, i) => <option key={d.id} value={d.id}>Day {i + 1} · {formatDay(d.date, { weekday: "short", day: "numeric" })}</option>)}
           </select></div>
         <div className="field"><label htmlFor={uid("pos")}>Order in day</label>
           <select id={uid("pos")} value={safePos} onChange={(e) => setPos(Number(e.target.value))}>
-            {Array.from({ length: count }, (_, i) => <option key={i} value={i + 1}>{i + 1} of {count}{i === 0 ? " (first)" : i === count - 1 ? " (last)" : ""}</option>)}
+            {Array.from({ length: count }, (_, i) => <option key={i} value={i + 1}>{i + 1} of {count}</option>)}
           </select></div>
       </div>
       <div className="field"><label htmlFor={uid("n")}>Your notes</label><textarea id={uid("n")} rows={2} maxLength={1000} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
