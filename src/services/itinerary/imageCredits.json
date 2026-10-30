@@ -622,5 +622,13 @@
   "license": "CC BY-SA 3.0",
   "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
   "sourceUrl": "https://commons.wikimedia.org/wiki/File:Skyscrapers_of_Shinjuku_2009_January.jpg"
+ },
+ "paris:background": {
+  "src": "/images/backgrounds/paris-960.jpg",
+  "title": "Eiffel_Tower_and_Pont_Alexandre_III_at_night.jpg",
+  "author": "Getfunky Paris",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Eiffel_Tower_and_Pont_Alexandre_III_at_night.jpg"
  }
 }

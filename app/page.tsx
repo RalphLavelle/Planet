@@ -3,12 +3,33 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowRight, CalendarDays, CloudSun, Info, Map, MapPin, PenLine, RotateCcw, Share2, Sparkles, Wand2 } from "lucide-react";
 import { destinationImage } from "@/services/images";
-import { DestinationHero, DestinationThemeProvider, ThemedSectionDivider } from "@/components/theme";
+import { DestinationThemeProvider, ThemedSectionDivider } from "@/components/theme";
 import { getServices } from "@/services/container";
 import { resolveDestination } from "@/services/itinerary/DemoItineraryGenerator";
 import type { LoadIssue, TripSummary } from "@/repositories/TripRepository";
 import { formatDay } from "@/lib/dates";
 import { selectTheme } from "@/themes/registry";
+import { backgroundCredit, backgroundSrcSet, pickBackground } from "@/content/cityBackgrounds";
+
+function HomeHero() {
+  const bg = pickBackground(0);
+  const credit = bg ? backgroundCredit(bg) : null;
+  return (
+    <header className={`home-hero${bg ? " has-bg" : ""}`}>
+      {bg && <>{/* eslint-disable-next-line @next/next/no-img-element */}<img className="home-hero-img" src={bg.variants[1].src} srcSet={backgroundSrcSet(bg)} sizes="(orientation: portrait) 160vh, 100vw" alt="" width={1600} height={1025} fetchPriority="high" decoding="async" style={{ objectPosition: bg.objectPosition }} /></>}
+      <div className="home-hero-inner"><div className="home-hero-col">
+        <p className="eyebrow">Personal travel guides</p>
+        <h1>Your trip, as a travel magazine written just for you.</h1>
+        <ul className="hero-facts"><li><MapPin size={16} aria-hidden="true" /> Any destination</li><li><CloudSun size={16} aria-hidden="true" /> Live weather &amp; exchange rates</li></ul>
+        <p className="lede">Tell Planet where you&apos;re going and what you love. It drafts a day-by-day guide with places, maps, costs and weather — then you shape it, keep it and take it with you.</p>
+        <div className="row">
+          <Link href="/new" className="btn"><Sparkles size={18} aria-hidden="true" /> Plan a new trip</Link>
+        </div>
+      </div></div>
+      {bg && credit && <p className="home-hero-credit">{bg.city} · Photo: {credit.author} · {credit.license} · <Link href="/credits">credits</Link></p>}
+    </header>
+  );
+}
 
 function TripCard({ t }: { t: TripSummary }) {
   const dest = resolveDestination(t.destinationName).destination;
@@ -52,14 +73,8 @@ export default function Home() {
 
   return (
     <DestinationThemeProvider>
+      <HomeHero />
       <div className="page">
-        <DestinationHero eyebrow="Personal travel guides" title="Your trip, as a travel magazine written just for you.">
-          <ul className="hero-facts"><li><MapPin size={16} aria-hidden="true" /> Any destination</li><li><CloudSun size={16} aria-hidden="true" /> Live weather &amp; exchange rates</li></ul>
-          <p className="lede">Tell Planet where you&apos;re going and what you love. It drafts a day-by-day guide with places, maps, costs and weather — then you shape it, keep it and take it with you.</p>
-          <div className="row">
-            <Link href="/new" className="btn"><Sparkles size={18} aria-hidden="true" /> Plan a new trip</Link>
-          </div>
-        </DestinationHero>
         <ThemedSectionDivider label="Your trips" icon={<Map size={20} aria-hidden="true" />} />
         {trips === null ? <p className="muted">Loading your trips…</p> : trips.length === 0 ? (
           <div className="empty"><Map size={28} aria-hidden="true" /><p>No trips yet. <Link href="/new">Plan your first trip</Link>.</p></div>
