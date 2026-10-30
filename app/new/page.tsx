@@ -2,14 +2,15 @@
 import type React from "react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Accessibility, ArrowLeft, ArrowRight, BedDouble, CalendarCheck, CalendarDays, Check, Clock, Coins, Footprints, Gauge, Heart, ListChecks, Loader2, MapPin, PiggyBank, PlaneLanding, PlaneTakeoff, RefreshCw, Salad, SlidersHorizontal, Sparkles, StickyNote, Users } from "lucide-react";
-import { activityImage, destinationImage } from "@/services/images";
+import { Accessibility, ArrowLeft, ArrowRight, BedDouble, CalendarCheck, CalendarDays, Check, Coins, Footprints, Gauge, Heart, ListChecks, Loader2, MapPin, PiggyBank, PlaneLanding, PlaneTakeoff, RefreshCw, Salad, SlidersHorizontal, Sparkles, StickyNote, Users } from "lucide-react";
+import { destinationImage } from "@/services/images";
 import { resolveDestination } from "@/services/itinerary/DemoItineraryGenerator";
 import { PhotoCredit } from "@/components/ui";
-import { CategoryOrnament } from "@/components/theme";
 import { Collapsible } from "@/components/Collapsible";
+import { ActivityRow } from "@/components/ActivityRow";
+import { AddItem } from "@/components/AddItem";
+import * as edit from "@/services/editing";
 import { DestinationHero, DestinationMotif, DestinationThemeProvider, ThemedSectionDivider } from "@/components/theme";
-import { ActivityCategoryIcon } from "@/components/ui";
 import { INTERESTS, PreferencesSchema, TripInputSchema, type Preferences, type Trip } from "@/domain/schemas";
 import { formatDay } from "@/lib/dates";
 import { getServices } from "@/services/container";
@@ -38,13 +39,15 @@ export default function NewTrip() {
   const [progress, setProgress] = useState("");
   const [notice, setNotice] = useState("");
   const [saveError, setSaveError] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [edited, setEdited] = useState(false); // draft has hand edits that regenerating would discard
   const [flightsOpen, setFlightsOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
 
   // Prefill from ?dest= (destination cards on the home page).
   useEffect(() => { const d = new URLSearchParams(window.location.search).get("dest"); if (d) setDestination(d.slice(0, 120)); }, []);
   // Restore an unconfirmed draft from this tab's session storage.
-  useEffect(() => { getServices().drafts.getDraft().then((d) => { if (d) { setDraft(d); setDestination(d.destination.name); setArrival(d.arrivalDate); setDeparture(d.departureDate); setCurrency(d.nativeCurrency); setAccommodation(d.accommodation); setArrNum(d.flights.arrival?.number ?? ""); setArrTime(d.flights.arrival?.time ?? ""); setDepNum(d.flights.departure?.number ?? ""); setDepTime(d.flights.departure?.time ?? ""); setPrefs(d.preferences); setStep(2); } }); }, []);
+  useEffect(() => { getServices().drafts.getDraft().then((d) => { if (d) { setDraft(d); setEdited(d.updatedAt !== d.createdAt); setDestination(d.destination.name); setArrival(d.arrivalDate); setDeparture(d.departureDate); setCurrency(d.nativeCurrency); setAccommodation(d.accommodation); setArrNum(d.flights.arrival?.number ?? ""); setArrTime(d.flights.arrival?.time ?? ""); setDepNum(d.flights.departure?.number ?? ""); setDepTime(d.flights.departure?.time ?? ""); setPrefs(d.preferences); setStep(2); } }); }, []);
 
   const flight = (number: string, time: string) => (number.trim() || time ? { number: number.trim() || undefined, time: time || undefined } : undefined);
   const input = { destination, arrivalDate, departureDate, nativeCurrency, accommodation, flights: { arrival: flight(arrNum, arrTime), departure: flight(depNum, depTime) }, preferences: prefs };
@@ -58,8 +61,15 @@ export default function NewTrip() {
     return false;
   }
 
+  /** Apply a hand edit to the draft preview; kept in session storage so a refresh doesn't lose it. */
+  function updateDraft(next: Trip, _label: string) {
+    setDraft(next); setEdited(true); setEditingId(null);
+    getServices().drafts.saveDraft(next).catch(() => {});
+  }
+
   async function generate(nextSeed = seed) {
     if (!validateBasics()) { setStep(0); return; }
+    if (edited && !window.confirm("Generating again replaces the edits you made to this draft. Continue?")) return;
     setBusy(true);
     try {
       const s = getServices();
@@ -67,7 +77,7 @@ export default function NewTrip() {
       const t = await generateTrip(input, s.generator, nextSeed, setProgress);
       setNotice(generationNotice(t) ?? "");
       await s.drafts.saveDraft(t);
-      setDraft(t); setStep(2);
+      setDraft(t); setEdited(false); setEditingId(null); setStep(2);
     } catch { setNotice("Something went wrong while drafting — please try again."); } finally { setBusy(false); setProgress(""); }
   }
 
@@ -170,7 +180,12 @@ export default function NewTrip() {
             {notice && <p className="notice notice-warn" role="status">{notice}</p>}
             {draft.days.map((d) => (
               <Collapsible key={d.id} id={`preview-${d.id}`} level={3} defaultOpen={d.id === draft.days[0].id} className="preview-day" icon={<DestinationMotif size={18} />} title={formatDay(d.date)} summary={`${d.title} · ${d.activities.length} stops`}>
-                <ul className="preview-list">{d.activities.map((a) => { const img = activityImage(a); return <li key={a.id}><span className="time"><Clock size={12} aria-hidden="true" /> {a.startTime}</span>{img ? /* eslint-disable-next-line @next/next/no-img-element */ <img className="mini-thumb" src={img.src} alt="" loading="lazy" /> : <span className="mini-thumb mini-fallback"><CategoryOrnament category={a.category} size={22} /></span>}<ActivityCategoryIcon category={a.category} /> {a.title}</li>; })}</ul>
+                <ul className="activities day-items" aria-label={`Items for ${formatDay(d.date)}`}>
+                  {d.activities.map((a) => <ActivityRow key={a.id} trip={draft} dayId={d.id} activity={a} editing={editingId === a.id} onEditing={(o) => setEditingId(o ? a.id : null)} onChange={updateDraft} />)}
+                </ul>
+                {d.activities.length === 0 && <p className="muted">A free day — add something below.</p>}
+                <AddItem dayId={d.id} cityName={draft.destination.name} center={draft.destination.location} base={null}
+                  onAdd={(v) => v.kind === "activity" ? updateDraft(edit.addActivity(draft, d.id, v), `Added “${v.title}”`) : updateDraft(edit.addMeal(draft, d.id, v), `Added ${v.meal} at “${v.venue.name}”`)} />
               </Collapsible>
             ))}
             <ThemedSectionDivider />

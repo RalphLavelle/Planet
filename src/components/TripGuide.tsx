@@ -1,28 +1,27 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import {
-  CalendarDays, ChevronsDownUp, ChevronsUpDown, Clock, Droplets, Home, Map as MapIcon, Share2, Trees, Sparkles, ListOrdered, CloudRain, CloudSun, Copy, ExternalLink, Lightbulb, Link2, MapPin, Navigation, Pencil,
+  CalendarDays, ChevronsDownUp, ChevronsUpDown, Droplets, Map as MapIcon, Share2, Sparkles, ListOrdered, CloudRain, CloudSun, Copy, ExternalLink, Lightbulb, Link2, MapPin,
   PlaneLanding, PlaneTakeoff, RefreshCw, Sun, Thermometer, Wallet,
 } from "lucide-react";
 import type { Activity, ItineraryDay, Trip } from "@/domain/schemas";
 import { convertEstimate, formatEstimate, sumEstimates } from "@/domain/money";
-import { formatDay, formatDuration, relativeTime } from "@/lib/dates";
+import { formatDay, relativeTime } from "@/lib/dates";
 import { getServices } from "@/services/container";
 import { findCatalogDestination } from "@/services/itinerary/catalog";
 import type { RefreshReport } from "@/services/refresh";
 import { createSnapshot, encodeSnapshot } from "@/services/sharing";
 import * as edit from "@/services/editing";
-import { CategoryOrnament, DestinationHero, DestinationMotif, OrnamentRow, ThemeBullet, useDestinationTheme } from "./theme";
-import { activityImage, tripHeroImage } from "@/services/images";
-import { ItemEditor } from "./ItemEditor";
+import { DestinationHero, DestinationMotif, OrnamentRow, ThemeBullet, useDestinationTheme } from "./theme";
+import { tripHeroImage } from "@/services/images";
+import { ActivityRow } from "./ActivityRow";
 import { FlightCard } from "./FlightCard";
 import { Collapsible } from "./Collapsible";
 import { DayHeader, dayBannerPhotos } from "./DayHeader";
 import { displayDayTitle } from "@/domain/dayTitles";
-import { MiniMap } from "./MiniMap";
-import { AddItem, VenueThumb } from "./AddItem";
+import { AddItem } from "./AddItem";
 import type { GeoPoint } from "@/domain/schemas";
-import { ActivityCategoryIcon, ActivityThumb, CATEGORY_LABEL, PhotoCredit, StatusBadge } from "./ui";
+import { ActivityCategoryIcon, PhotoCredit, StatusBadge } from "./ui";
 
 type Props = { trip: Trip; readOnly?: boolean; onChange?: (next: Trip, label: string) => void; onRegenerate?: () => void };
 
@@ -97,60 +96,11 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
   const localUrl = typeof window !== "undefined" ? `${window.location.origin}/trip/?id=${trip.id}` : "";
   const snapshotUrl = () => `${window.location.origin}/shared#${encodeSnapshot(createSnapshot(trip, { includeAccommodation: includeAcc, includeFlights }))}`;
 
-  const photoOf = (a: Activity) => a.venue ? a.venue.photo ?? null : activityImage(a);
-  const renderActivity = (day: ItineraryDay, a: Activity, idx: number) => {
+  const renderActivity = (day: ItineraryDay, a: Activity) => {
     const sugg = report?.suggestions.find((s) => s.activityId === a.id);
-    const swapTitle = sugg?.swapWithActivityId && trip.days.flatMap((d) => d.activities).find((x) => x.id === sugg.swapWithActivityId)?.title;
-    return (
-      <li key={a.id} className="activity">
-        <div className="activity-time"><Clock size={14} aria-hidden="true" className="muted" /><span>{a.startTime ?? "—"}</span><small>{formatDuration(a.durationMinutes)}</small></div>
-        {editing === a.id && !readOnly ? (
-          <article className="activity-card is-editing">
-            <ItemEditor trip={trip} dayId={day.id} activity={a} onCancel={() => setEditing(null)}
-              onSave={({ patch, place }) => { apply(edit.applyItemEdit(trip, day.id, a.id, patch, place), `Edited “${patch.title ?? a.title}”${place && place.dayId !== day.id ? " (moved day)" : ""}`); setEditing(null); }}
-              onDelete={() => { apply(edit.removeActivity(trip, day.id, a.id), `Removed “${a.title}”`); setEditing(null); }} />
-          </article>
-        ) : (
-        <article className={`activity-card${readOnly ? "" : " is-editable"}`}>
-          {a.venue ? <VenueThumb venue={a.venue} alt={a.venue.name} /> : <ActivityThumb category={a.category} placeId={a.placeId} imageRef={a.imageRef} alt={a.title} photo={a.photo} />}
-          <div className="activity-body">
-            <p className="badge-row">
-              <span className="cat-badge"><CategoryOrnament category={a.category} size={18} /><ActivityCategoryIcon category={a.category} size={14} /> {a.meal ? (a.meal === "lunch" ? "Lunch" : "Dinner") : CATEGORY_LABEL[a.category]}</span>
-              {a.origin !== "generated" ? <StatusBadge status="user" /> : <StatusBadge status={a.meta.status} />}
-              {a.indoor ? <span className="tag"><Home size={12} aria-hidden="true" /> Indoors</span> : a.origin === "generated" ? <span className="tag"><Trees size={12} aria-hidden="true" /> Outdoors</span> : null}
-            </p>
-            <>
-                {readOnly ? <h4>{a.title}</h4> : (
-                  <h4><button type="button" className="activity-open" onClick={() => setEditing(a.id)} aria-label={`Edit ${a.title}`}>{a.title}<Pencil size={14} aria-hidden="true" className="activity-open-icon" /></button></h4>
-                )}
-                {a.venue && <p className="desc venue-addr"><MapPin size={14} aria-hidden="true" /> {a.venue.address || "Address unknown"}{a.venue.osmUrl && <> · <a href={a.venue.osmUrl} target="_blank" rel="noopener noreferrer">OpenStreetMap</a></>}{a.venue.source === "manual" && <span className="muted"> · entered manually</span>}</p>}
-                {a.notes && <p className="notes"><Pencil size={14} aria-hidden="true" /> {a.notes}</p>}
-                <ul className="facts">
-                  {a.cost ? <li><Wallet size={14} aria-hidden="true" /> {formatEstimate(a.cost)}{conv(a.cost) ? <span className="muted"> ({conv(a.cost)})</span> : null} <span className="muted">illustrative</span></li>
-                    : a.origin === "generated" ? <li className="muted"><Wallet size={14} aria-hidden="true" /> Cost unknown</li> : null}
-                  {a.location && <li><a href={services.directions.directionsUrl(a.location, trip.accommodation ? `${trip.accommodation}, ${trip.destination.name}` : undefined)} target="_blank" rel="noopener noreferrer"><Navigation size={14} aria-hidden="true" /> Directions<span className="sr-only"> to {a.title} (opens Google Maps)</span></a></li>}
-                </ul>
-                {(!a.venue && a.description) || (a.origin === "generated" && a.meta.status !== "demo") || a.location || photoOf(a) ? (
-                  <Collapsible id={`act-${a.id}`} scope={trip.id} level={5} variant="inline" title="Details" summary={a.venue ? undefined : a.description ? a.description.slice(0, 70) + (a.description.length > 70 ? "…" : "") : a.location ? "Map, opening hours" : undefined}>
-                    {!a.venue && a.description && <p className="desc">{a.description}</p>}
-                    {a.origin === "generated" && a.meta.status !== "demo" && (
-                      <p className="src-line muted">{a.openingHoursNote ?? "Opening hours unknown — check before you go."}{a.sourceUrl && <> · <a href={a.sourceUrl} target="_blank" rel="noopener noreferrer">{a.sourceUrl.includes("wikipedia.org") ? "Wikipedia" : "OpenStreetMap"}</a></>}</p>
-                    )}
-                    {photoOf(a) && <p className="src-line muted">Photo: {photoOf(a)!.author} · {photoOf(a)!.license} · <a href={photoOf(a)!.sourceUrl} target="_blank" rel="noopener noreferrer">source</a></p>}
-                    {a.location && <MiniMap stop={a.location} base={base} accent={theme.tokens.secondary} />}
-                  </Collapsible>
-                ) : null}
-                {sugg && !readOnly && (
-                  <div className="suggest" role="note"><CloudRain size={16} aria-hidden="true" /> {sugg.reason}{swapTitle ? <> Swap with <strong>{swapTitle}</strong>?</> : null}
-                    {sugg.swapWithActivityId && <button className="btn btn-small btn-ghost" onClick={() => apply(edit.swapActivities(trip, a.id, sugg.swapWithActivityId!), `Swapped “${a.title}” for “${swapTitle}”`)}>Swap</button>}
-                  </div>
-                )}
-              </>
-          </div>
-        </article>
-        )}
-      </li>
-    );
+    const swapTitle = sugg?.swapWithActivityId ? trip.days.flatMap((d) => d.activities).find((x) => x.id === sugg.swapWithActivityId)?.title : undefined;
+    return <ActivityRow key={a.id} trip={trip} dayId={day.id} activity={a} readOnly={readOnly} editing={editing === a.id} onEditing={(o) => setEditing(o ? a.id : null)}
+      onChange={apply} base={base} conv={conv} suggestion={sugg} swapTitle={swapTitle} />;
   };
 
   return (
@@ -212,7 +162,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
             {i === 0 && flightsChanged && !readOnly && <p className="notice notice-warn">Flight times changed. Your plans haven&apos;t been moved. {onRegenerate && <button className="btn btn-small btn-ghost" onClick={() => { setFlightsChanged(false); onRegenerate(); }}>Refit itinerary to flights</button>}</p>}
             {day.activities.length === 0 ? (
               <div className="empty small"><DestinationMotif size={28} /><p>A free day. Wander, rest, or add something below.</p></div>
-            ) : <ol className="activities">{day.activities.map((a, idx) => renderActivity(day, a, idx))}</ol>}
+            ) : <ol className="activities">{day.activities.map((a) => renderActivity(day, a))}</ol>}
             {i === trip.days.length - 1 && flightPanel("departure")}
             {!readOnly && <AddItem dayId={day.id} cityName={trip.destination.name} center={trip.destination.location} base={base} onAdd={(v) => v.kind === "activity" ? apply(edit.addActivity(trip, day.id, v), `Added “${v.title}”`) : apply(edit.addMeal(trip, day.id, v), `Added ${v.meal} at “${v.venue.name}”`)} />}
             </div>

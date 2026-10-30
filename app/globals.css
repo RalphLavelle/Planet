@@ -109,9 +109,6 @@ input[aria-invalid=true] { border-color: #b3261e; }
 .steps li { flex: 1; padding-top: 8px; border-top: 4px solid var(--line); color: var(--muted); }
 .steps li.done { border-color: var(--primary); color: var(--ink); font-weight: 600; }
 .preview-day h3 { font-size: 1.15rem; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.preview-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
-.preview-list li { display: flex; gap: 10px; align-items: center; }
-.time { font-variant-numeric: tabular-nums; color: var(--muted); width: 3.2em; font-size: .9rem; }
 
 /* Weather */
 .wx-strip { list-style: none; padding: 0; margin: var(--space-3) 0 0; display: flex; gap: var(--space-2); overflow-x: auto; }
@@ -240,10 +237,6 @@ input[aria-invalid=true] { border-color: #b3261e; }
 .dest-preview { position: relative; margin: var(--space-2) 0 0; border-radius: var(--radius); overflow: hidden; height: 160px; }
 .dest-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .dest-preview figcaption { position: absolute; left: 10px; bottom: 10px; background: rgba(255,255,255,.92); color: #1f2a37; padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: .85rem; display: inline-flex; gap: 5px; align-items: center; }
-.mini-thumb { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; flex: none; }
-.mini-fallback { display: grid; place-items: center; background: color-mix(in srgb, var(--primary) 8%, var(--surface)); }
-.preview-list li { gap: 12px; }
-.time { display: inline-flex; gap: 4px; align-items: center; width: 4.4em; }
 
 /* Credits */
 .credits { list-style: none; padding: 0; display: grid; gap: var(--space-3); }
@@ -395,8 +388,8 @@ input[aria-invalid=true] { border-color: #b3261e; }
 .day-controls .btn, .collapsible-actions .btn { min-height: 44px; }
 
 /* ===== Aligned item rows: one fixed grid shared by every day (time | thumbnail | content) ===== */
-.day { --time-col: 52px; --thumb: 76px; --row-gap: var(--space-3); }
-@media (min-width: 680px) { .day { --time-col: 72px; --thumb: 120px; } }
+.day, .preview-day { --time-col: 52px; --thumb: 76px; --row-gap: var(--space-3); }
+@media (min-width: 680px) { .day, .preview-day { --time-col: 72px; --thumb: 120px; } }
 .activities { gap: var(--space-3); }
 .activity { grid-template-columns: var(--time-col) minmax(0, 1fr); gap: var(--row-gap); align-items: start; }
 .activity-time { padding-top: var(--space-3); min-width: 0; }
@@ -418,15 +411,27 @@ input[aria-invalid=true] { border-color: #b3261e; }
 .activity-open { all: unset; box-sizing: border-box; display: inline; cursor: pointer; font: inherit; color: inherit; }
 .activity-open:focus-visible { outline: none; }
 .activity-open::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
-.activity-open-icon { margin-left: 8px; vertical-align: -1px; color: var(--muted); opacity: .8; }
 /* Interactive bits inside a row stay above the full-row tap target, so they never trigger the editor. */
 .activity-card a:not(.photo-credit), .activity-card .collapsible-inline, .activity-card .suggest, .activity-card .minimap { position: relative; z-index: 2; }
 .activity-body .facts a { min-height: 32px; }
 .add-btn { margin-left: calc(var(--time-col, 52px) + var(--space-3)); }
-.day { --time-col: 52px; }
-@media (min-width: 680px) { .day { --time-col: 72px; } }
 .item-editor-actions .danger { margin-right: auto; }
 .activity .facts { gap: var(--space-1) var(--space-3); }
 .activity .facts li { display: flex; flex-wrap: wrap; align-items: center; gap: 0 5px; }
 .item-editor .grid2 { grid-template-columns: 1fr 1fr; gap: var(--space-3); }
 .item-editor .grid-day { grid-template-columns: 1.5fr 1fr; }
+
+/* ===== Row affordance: the whole row reads as tappable ===== */
+.activity-card.is-editable { padding-right: calc(var(--space-3) + 28px); }
+@media (min-width: 680px) { .activity-card.is-editable { padding-right: calc(var(--space-4) + 64px); } }
+.row-cue { position: absolute; right: var(--space-2); top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center; gap: 2px; color: var(--primary); pointer-events: none; opacity: .75; }
+.row-cue-label { display: none; font: 600 .8rem var(--sans); }
+@media (min-width: 680px) { .row-cue { right: var(--space-4); } .row-cue-label { display: inline; } }
+.activity-card.is-editable:hover { background: color-mix(in srgb, var(--primary) 4%, var(--surface)); border-color: color-mix(in srgb, var(--primary) 55%, var(--line)); box-shadow: 0 4px 16px rgba(20,30,50,.12); }
+.activity-card.is-editable:hover .row-cue { opacity: 1; transform: translateY(-50%) translateX(2px); }
+.activity-card.is-editable:active { background: color-mix(in srgb, var(--primary) 10%, var(--surface)); transform: scale(.992); box-shadow: var(--shadow); }
+.activity-card.is-editable { -webkit-tap-highlight-color: color-mix(in srgb, var(--primary) 18%, transparent); touch-action: manipulation; }
+.row-cue { transition: transform .15s, opacity .15s; }
+.collapsible.preview-day .activities { margin-top: var(--space-1); }
+.collapsible.preview-day .add-btn { margin-left: calc(var(--time-col) + var(--space-3)); }
+.collapsible.preview-day > .collapsible-body { padding: 0 var(--space-2) var(--space-3); }
