@@ -393,3 +393,39 @@ input[aria-invalid=true] { border-color: #b3261e; }
 /* Tap targets ≥ 44px for the collapse controls */
 .day-toggle { width: 44px; height: 44px; }
 .day-controls .btn, .collapsible-actions .btn { min-height: 44px; }
+
+/* ===== Aligned item rows: one fixed grid shared by every day (time | thumbnail | content) ===== */
+.day { --time-col: 52px; --thumb: 76px; --row-gap: var(--space-3); }
+@media (min-width: 680px) { .day { --time-col: 72px; --thumb: 120px; } }
+.activities { gap: var(--space-3); }
+.activity { grid-template-columns: var(--time-col) minmax(0, 1fr); gap: var(--row-gap); align-items: start; }
+.activity-time { padding-top: var(--space-3); min-width: 0; }
+.activity .activity-card { position: relative; display: grid; grid-template-columns: var(--thumb) minmax(0, 1fr); column-gap: var(--space-3); align-items: start; padding: var(--space-3); }
+@media (min-width: 680px) { .activity .activity-card { grid-template-columns: var(--thumb) minmax(0, 1fr); column-gap: var(--space-4); padding: var(--space-4); } }
+.activity .activity-card .thumb { width: var(--thumb); height: var(--thumb); min-height: 0; aspect-ratio: 1; border-radius: var(--radius-s); }
+.activity .activity-card .thumb img { object-fit: cover; object-position: center; }
+.activity .activity-card .thumb-fallback { width: 52px; height: 52px; }
+.activity .activity-card .thumb-fallback svg:not(.thumb-icon-small svg) { max-width: 36px; max-height: 36px; }
+.activity .activity-card .photo-credit { left: 0; right: 0; bottom: 0; max-width: none; border-radius: 0; justify-content: center; font-size: .5rem; padding: 1px 3px; }
+.activity .activity-body { padding: 0; }
+.activity .activity-body h4 { font-size: 1.08rem; margin: 0 0 var(--space-1); overflow-wrap: anywhere; }
+@media (min-width: 680px) { .activity .activity-body h4 { font-size: 1.25rem; } }
+.activity-card.is-editing { display: block; }
+.activity-card.is-editing .item-editor { padding: 0; }
+.activity-card.is-editable { cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+.activity-card.is-editable:hover { border-color: color-mix(in srgb, var(--primary) 45%, var(--line)); }
+.activity-card.is-editable:has(.activity-open:focus-visible) { outline: 3px solid var(--secondary); outline-offset: 2px; }
+.activity-open { all: unset; box-sizing: border-box; display: inline; cursor: pointer; font: inherit; color: inherit; }
+.activity-open:focus-visible { outline: none; }
+.activity-open::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+.activity-open-icon { margin-left: 8px; vertical-align: -1px; color: var(--muted); opacity: .8; }
+/* Interactive bits inside a row stay above the full-row tap target, so they never trigger the editor. */
+.activity-card a:not(.photo-credit), .activity-card .collapsible-inline, .activity-card .suggest, .activity-card .minimap { position: relative; z-index: 2; }
+.activity-body .facts a { min-height: 32px; }
+.add-btn { margin-left: calc(var(--time-col, 52px) + var(--space-3)); }
+.day { --time-col: 52px; }
+@media (min-width: 680px) { .day { --time-col: 72px; } }
+.item-editor-actions .danger { margin-right: auto; }
+.activity .facts { gap: var(--space-1) var(--space-3); }
+.activity .facts li { display: flex; flex-wrap: wrap; align-items: center; gap: 0 5px; }
+.item-editor .grid2 { grid-template-columns: 1fr 1fr; gap: var(--space-3); }

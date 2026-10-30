@@ -66,6 +66,31 @@ export function moveActivity(t: Trip, fromDayId: string, activityId: string, toD
   return touch(t, t.days.map((d, k) => k === fi ? { ...d, activities: d.activities.filter((x) => x.id !== activityId) } : k === ti ? { ...d, activities: [...d.activities, { ...a, origin: a.origin === "manual" ? "manual" : "edited" as const }] } : d));
 }
 
+/**
+ * Put an activity at a 0-based position in a day (the same day = reorder, another day = move). The position is
+ * clamped to the day's length. Moving to another day marks the item as edited.
+ */
+export function placeActivity(t: Trip, activityId: string, toDayId: string, position: number): Trip {
+  const ti = findDay(t, toDayId);
+  let from = -1, idx = -1;
+  t.days.forEach((d, di) => { const i = d.activities.findIndex((a) => a.id === activityId); if (i >= 0) { from = di; idx = i; } });
+  if (from < 0) throw new Error("Activity not found");
+  const item = t.days[from].activities[idx];
+  const moved = { ...item, ...(from !== ti ? { origin: item.origin === "manual" ? ("manual" as const) : ("edited" as const) } : {}) };
+  const without = t.days.map((d, di) => di === from ? { ...d, activities: d.activities.filter((a) => a.id !== activityId) } : d);
+  const target = [...without[ti].activities];
+  target.splice(Math.max(0, Math.min(position, target.length)), 0, moved);
+  if (from === ti && target.every((a, i) => a.id === t.days[ti].activities[i]?.id)) return t;
+  return touch(t, without.map((d, di) => di === ti ? { ...d, activities: target } : d));
+}
+
+/** One save from the item editor: field edits, then (optionally) day and position. */
+export function applyItemEdit(t: Trip, dayId: string, activityId: string, patch: ActivityPatch, place?: { dayId: string; position: number }): Trip {
+  let next = updateActivity(t, dayId, activityId, patch);
+  if (place) next = placeActivity(next, activityId, place.dayId, place.position);
+  return next;
+}
+
 /** Swap two activities' positions (possibly across days) — used for user-approved weather suggestions. */
 export function swapActivities(t: Trip, aId: string, bId: string): Trip {
   const loc = (id: string) => { for (const [di, d] of t.days.entries()) { const ai = d.activities.findIndex((a) => a.id === id); if (ai >= 0) return [di, ai] as const; } throw new Error("Activity not found"); };

@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowDown, ArrowUp, CalendarDays, ChevronsDownUp, ChevronsUpDown, Clock, Droplets, Hourglass, Home, Map as MapIcon, Share2, Trees, Sparkles, ListOrdered, CloudRain, CloudSun, Copy, ExternalLink, Lightbulb, Link2, MapPin, Navigation, Pencil, Plus,
-  PlaneLanding, PlaneTakeoff, RefreshCw, Sun, Thermometer, Trash2, Wallet,
+  CalendarDays, ChevronsDownUp, ChevronsUpDown, Clock, Droplets, Home, Map as MapIcon, Share2, Trees, Sparkles, ListOrdered, CloudRain, CloudSun, Copy, ExternalLink, Lightbulb, Link2, MapPin, Navigation, Pencil,
+  PlaneLanding, PlaneTakeoff, RefreshCw, Sun, Thermometer, Wallet,
 } from "lucide-react";
 import type { Activity, ItineraryDay, Trip } from "@/domain/schemas";
 import { convertEstimate, formatEstimate, sumEstimates } from "@/domain/money";
@@ -13,7 +13,8 @@ import type { RefreshReport } from "@/services/refresh";
 import { createSnapshot, encodeSnapshot } from "@/services/sharing";
 import * as edit from "@/services/editing";
 import { CategoryOrnament, DestinationHero, DestinationMotif, OrnamentRow, ThemeBullet, useDestinationTheme } from "./theme";
-import { tripHeroImage } from "@/services/images";
+import { activityImage, tripHeroImage } from "@/services/images";
+import { ItemEditor } from "./ItemEditor";
 import { FlightCard } from "./FlightCard";
 import { Collapsible } from "./Collapsible";
 import { DayHeader, dayBannerPhotos } from "./DayHeader";
@@ -26,23 +27,6 @@ import { ActivityCategoryIcon, ActivityThumb, CATEGORY_LABEL, PhotoCredit, Statu
 type Props = { trip: Trip; readOnly?: boolean; onChange?: (next: Trip, label: string) => void; onRegenerate?: () => void };
 
 function WeatherIcon({ code }: { code: number }) { return code >= 51 ? <CloudRain size={18} aria-hidden="true" /> : code <= 1 ? <Sun size={18} aria-hidden="true" /> : <CloudSun size={18} aria-hidden="true" />; }
-
-function ActivityEditor({ a, onSave, onCancel }: { a: Activity; onSave: (p: edit.ActivityPatch) => void; onCancel: () => void }) {
-  const [title, setTitle] = useState(a.title), [notes, setNotes] = useState(a.notes), [time, setTime] = useState(a.startTime ?? ""), [dur, setDur] = useState(a.durationMinutes);
-  const [err, setErr] = useState("");
-  return (
-    <form className="editor" onSubmit={(e) => { e.preventDefault(); if (!title.trim()) return setErr("Title is required"); if (dur < 5 || dur > 1440) return setErr("Duration must be 5–1440 minutes"); onSave({ title: title.trim(), notes, startTime: time || undefined, durationMinutes: dur }); }}>
-      <div className="field"><label htmlFor={`t-${a.id}`}>Title</label><input id={`t-${a.id}`} value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} autoFocus /></div>
-      <div className="grid2">
-        <div className="field"><label htmlFor={`s-${a.id}`}>Start time</label><input id={`s-${a.id}`} type="time" value={time} onChange={(e) => setTime(e.target.value)} /></div>
-        <div className="field"><label htmlFor={`d-${a.id}`}>Duration (min)</label><input id={`d-${a.id}`} type="number" min={5} max={1440} step={5} value={dur} onChange={(e) => setDur(Number(e.target.value))} /></div>
-      </div>
-      <div className="field"><label htmlFor={`n-${a.id}`}>Your notes</label><textarea id={`n-${a.id}`} rows={2} maxLength={1000} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
-      {err && <p className="err" role="alert">{err}</p>}
-      <div className="row end"><button type="button" className="btn btn-ghost btn-small" onClick={onCancel}>Cancel</button><button className="btn btn-small">Save</button></div>
-    </form>
-  );
-}
 
 export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
   const theme = useDestinationTheme();
@@ -113,13 +97,21 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
   const localUrl = typeof window !== "undefined" ? `${window.location.origin}/trip/?id=${trip.id}` : "";
   const snapshotUrl = () => `${window.location.origin}/shared#${encodeSnapshot(createSnapshot(trip, { includeAccommodation: includeAcc, includeFlights }))}`;
 
+  const photoOf = (a: Activity) => a.venue ? a.venue.photo ?? null : activityImage(a);
   const renderActivity = (day: ItineraryDay, a: Activity, idx: number) => {
     const sugg = report?.suggestions.find((s) => s.activityId === a.id);
     const swapTitle = sugg?.swapWithActivityId && trip.days.flatMap((d) => d.activities).find((x) => x.id === sugg.swapWithActivityId)?.title;
     return (
       <li key={a.id} className="activity">
         <div className="activity-time"><Clock size={14} aria-hidden="true" className="muted" /><span>{a.startTime ?? "—"}</span><small>{formatDuration(a.durationMinutes)}</small></div>
-        <article className="activity-card">
+        {editing === a.id && !readOnly ? (
+          <article className="activity-card is-editing">
+            <ItemEditor trip={trip} dayId={day.id} activity={a} onCancel={() => setEditing(null)}
+              onSave={({ patch, place }) => { apply(edit.applyItemEdit(trip, day.id, a.id, patch, place), `Edited “${patch.title ?? a.title}”${place && place.dayId !== day.id ? " (moved day)" : ""}`); setEditing(null); }}
+              onDelete={() => { apply(edit.removeActivity(trip, day.id, a.id), `Removed “${a.title}”`); setEditing(null); }} />
+          </article>
+        ) : (
+        <article className={`activity-card${readOnly ? "" : " is-editable"}`}>
           {a.venue ? <VenueThumb venue={a.venue} alt={a.venue.name} /> : <ActivityThumb category={a.category} placeId={a.placeId} imageRef={a.imageRef} alt={a.title} photo={a.photo} />}
           <div className="activity-body">
             <p className="badge-row">
@@ -127,25 +119,24 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
               {a.origin !== "generated" ? <StatusBadge status="user" /> : <StatusBadge status={a.meta.status} />}
               {a.indoor ? <span className="tag"><Home size={12} aria-hidden="true" /> Indoors</span> : a.origin === "generated" ? <span className="tag"><Trees size={12} aria-hidden="true" /> Outdoors</span> : null}
             </p>
-            {editing === a.id && !readOnly ? (
-              <ActivityEditor a={a} onCancel={() => setEditing(null)} onSave={(p) => { apply(edit.updateActivity(trip, day.id, a.id, p), `Edited “${p.title}”`); setEditing(null); }} />
-            ) : (
-              <>
-                <h4>{a.title}</h4>
+            <>
+                {readOnly ? <h4>{a.title}</h4> : (
+                  <h4><button type="button" className="activity-open" onClick={() => setEditing(a.id)} aria-label={`Edit ${a.title}`}>{a.title}<Pencil size={14} aria-hidden="true" className="activity-open-icon" /></button></h4>
+                )}
                 {a.venue && <p className="desc venue-addr"><MapPin size={14} aria-hidden="true" /> {a.venue.address || "Address unknown"}{a.venue.osmUrl && <> · <a href={a.venue.osmUrl} target="_blank" rel="noopener noreferrer">OpenStreetMap</a></>}{a.venue.source === "manual" && <span className="muted"> · entered manually</span>}</p>}
                 {a.notes && <p className="notes"><Pencil size={14} aria-hidden="true" /> {a.notes}</p>}
                 <ul className="facts">
-                  {a.startTime && <li><Clock size={14} aria-hidden="true" /> {a.startTime}</li>}<li><Hourglass size={14} aria-hidden="true" /> {formatDuration(a.durationMinutes)}</li>
                   {a.cost ? <li><Wallet size={14} aria-hidden="true" /> {formatEstimate(a.cost)}{conv(a.cost) ? <span className="muted"> ({conv(a.cost)})</span> : null} <span className="muted">illustrative</span></li>
                     : a.origin === "generated" ? <li className="muted"><Wallet size={14} aria-hidden="true" /> Cost unknown</li> : null}
                   {a.location && <li><a href={services.directions.directionsUrl(a.location, trip.accommodation ? `${trip.accommodation}, ${trip.destination.name}` : undefined)} target="_blank" rel="noopener noreferrer"><Navigation size={14} aria-hidden="true" /> Directions<span className="sr-only"> to {a.title} (opens Google Maps)</span></a></li>}
                 </ul>
-                {(!a.venue && a.description) || (a.origin === "generated" && a.meta.status !== "demo") || a.location ? (
+                {(!a.venue && a.description) || (a.origin === "generated" && a.meta.status !== "demo") || a.location || photoOf(a) ? (
                   <Collapsible id={`act-${a.id}`} scope={trip.id} level={5} variant="inline" title="Details" summary={a.venue ? undefined : a.description ? a.description.slice(0, 70) + (a.description.length > 70 ? "…" : "") : a.location ? "Map, opening hours" : undefined}>
                     {!a.venue && a.description && <p className="desc">{a.description}</p>}
                     {a.origin === "generated" && a.meta.status !== "demo" && (
                       <p className="src-line muted">{a.openingHoursNote ?? "Opening hours unknown — check before you go."}{a.sourceUrl && <> · <a href={a.sourceUrl} target="_blank" rel="noopener noreferrer">{a.sourceUrl.includes("wikipedia.org") ? "Wikipedia" : "OpenStreetMap"}</a></>}</p>
                     )}
+                    {photoOf(a) && <p className="src-line muted">Photo: {photoOf(a)!.author} · {photoOf(a)!.license} · <a href={photoOf(a)!.sourceUrl} target="_blank" rel="noopener noreferrer">source</a></p>}
                     {a.location && <MiniMap stop={a.location} base={base} accent={theme.tokens.secondary} />}
                   </Collapsible>
                 ) : null}
@@ -155,23 +146,9 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
                   </div>
                 )}
               </>
-            )}
           </div>
-          {!readOnly && editing !== a.id && (
-            <div className="activity-tools" role="group" aria-label={`Actions for ${a.title}`}>
-              <button className="icon-btn" onClick={() => setEditing(a.id)} aria-label={`Edit ${a.title}`} title="Edit"><Pencil size={16} /></button>
-              <button className="icon-btn" onClick={() => apply(edit.reorderActivity(trip, day.id, a.id, -1), `Moved “${a.title}” up`)} disabled={idx === 0} aria-label={`Move ${a.title} earlier`} title="Move up"><ArrowUp size={16} /></button>
-              <button className="icon-btn" onClick={() => apply(edit.reorderActivity(trip, day.id, a.id, 1), `Moved “${a.title}” down`)} disabled={idx === day.activities.length - 1} aria-label={`Move ${a.title} later`} title="Move down"><ArrowDown size={16} /></button>
-              {trip.days.length > 1 && (
-                <select className="move-select" aria-label={`Move ${a.title} to another day`} value="" onChange={(e) => e.target.value && apply(edit.moveActivity(trip, day.id, a.id, e.target.value), `Moved “${a.title}” to ${formatDay(trip.days.find((d) => d.id === e.target.value)!.date, { weekday: "long" })}`)}>
-                  <option value="">Move to…</option>
-                  {trip.days.filter((d) => d.id !== day.id).map((d) => <option key={d.id} value={d.id}>{formatDay(d.date, { weekday: "short", day: "numeric", month: "short" })}</option>)}
-                </select>
-              )}
-              <button className="icon-btn danger" onClick={() => apply(edit.removeActivity(trip, day.id, a.id), `Removed “${a.title}”`)} aria-label={`Remove ${a.title}`} title="Remove"><Trash2 size={16} /></button>
-            </div>
-          )}
         </article>
+        )}
       </li>
     );
   };
