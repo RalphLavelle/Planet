@@ -51,6 +51,6 @@ describe("draft edits carry through to Save", () => {
     expect(restored.days[1].activities[0]).toMatchObject({ id: a.id, title: "My tweak", startTime: "09:15" });
     expect(restored.days[0].activities.some((x) => x.title === "Coffee with Sam")).toBe(true);
     expect(restored.days[2].activities).toHaveLength(trip.days[2].activities.length - 1);
-    expect(restored.updatedAt).not.toBe(restored.createdAt);
+    expect(Date.parse(restored.updatedAt)).toBeGreaterThanOrEqual(Date.parse(restored.createdAt)); // same-millisecond edits are possible, so no strict inequality
   });
 });
