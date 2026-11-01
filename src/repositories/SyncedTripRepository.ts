@@ -14,6 +14,9 @@ export interface RemoteTripStore {
   softDelete(id: string, at: string): Promise<void>;
 }
 
+/** Outcome of one reconcile run. `pushed` = trips uploaded, `pulled` = trips saved locally from the server, `removed` = trips deleted locally because they were deleted elsewhere. */
+export type SyncResult = { ok: true; pushed: number; pulled: number; removed: number } | { ok: false; error: string };
+
 export type SyncState = { ok: true; at: string } | { ok: false; at: string; error: string } | null;
 
 const TOMB = "planet:tombstone:";
@@ -31,7 +34,7 @@ function parseTrip(raw: unknown): Trip | null {
  */
 export class SyncedTripRepository implements TripRepository {
   syncState: SyncState = null;
-  private inflight: Promise<void> | null = null;
+  private inflight: Promise<SyncResult> | null = null;
 
   /** `meta` holds pending-delete tombstones (normally localStorage); optional. */
   constructor(private readonly local: TripRepository, private readonly remote: RemoteTripStore, private readonly meta: () => KeyValueStore | null = () => null) {}
@@ -43,13 +46,14 @@ export class SyncedTripRepository implements TripRepository {
     return out;
   }
 
-  /** Reconcile local and remote. Never throws; failure is recorded in `syncState`. Concurrent calls share one run. */
-  sync(): Promise<void> {
+  /** Reconcile local and remote. Never throws; failure is recorded in `syncState` and returned. Concurrent calls share one run. */
+  sync(): Promise<SyncResult> {
     if (!this.inflight) this.inflight = this.runSync().finally(() => { this.inflight = null; });
     return this.inflight;
   }
 
-  private async runSync(): Promise<void> {
+  private async runSync(): Promise<SyncResult> {
+    let pushed = 0, pulled = 0, removed = 0;
     try {
       // 1. Flush deletions made while offline.
       for (const t of this.tombs()) { await this.remote.softDelete(t.id, t.at); this.meta()?.removeItem(TOMB + t.id); }
@@ -61,20 +65,23 @@ export class SyncedTripRepository implements TripRepository {
         const l = locals.get(id);
         if (row.deletedAt) {
           if (!l) continue;
-          if (ts(l.updatedAt) <= ts(row.deletedAt)) { await this.local.delete(id); locals.delete(id); }
-          else await this.remote.upsert(l); // edited locally after it was deleted elsewhere: keep it
+          if (ts(l.updatedAt) <= ts(row.deletedAt)) { await this.local.delete(id); locals.delete(id); removed++; }
+          else { await this.remote.upsert(l); pushed++; } // edited locally after it was deleted elsewhere: keep it
           continue;
         }
         const r = parseTrip(row.data);
         if (!r) continue; // unreadable remote doc: never overwrite local with it
-        if (!l || ts(r.updatedAt) > ts(l.updatedAt)) await this.local.save(r);
-        else if (ts(l.updatedAt) > ts(r.updatedAt)) await this.remote.upsert(l);
+        if (!l || ts(r.updatedAt) > ts(l.updatedAt)) { await this.local.save(r); pulled++; }
+        else if (ts(l.updatedAt) > ts(r.updatedAt)) { await this.remote.upsert(l); pushed++; }
       }
       // 2. Local-only trips (including those created before Supabase was configured) go up.
-      for (const [id, l] of locals) if (!rows.has(id)) await this.remote.upsert(l);
+      for (const [id, l] of locals) if (!rows.has(id)) { await this.remote.upsert(l); pushed++; }
       this.syncState = { ok: true, at: new Date().toISOString() };
+      return { ok: true, pushed, pulled, removed };
     } catch (e) {
-      this.syncState = { ok: false, at: new Date().toISOString(), error: e instanceof Error ? e.message : String(e) };
+      const error = e instanceof Error ? e.message : String(e);
+      this.syncState = { ok: false, at: new Date().toISOString(), error };
+      return { ok: false, error };
     }
   }
 
@@ -106,6 +113,16 @@ export class SyncedTripRepository implements TripRepository {
     await this.sync(); // pull anything only on the server so it is cleared too
     for (const s of await this.local.list()) await this.delete(s.id);
     await this.local.clear(); // also removes unreadable local records
+  }
+
+  /**
+   * Forget everything cached on this device without touching the server (used on sign-out, so the next identity
+   * on a shared browser never inherits, or uploads, the previous account's trips).
+   */
+  async clearLocal(): Promise<void> {
+    await this.local.clear();
+    const m = this.meta();
+    for (const t of this.tombs()) m?.removeItem(TOMB + t.id);
   }
 
   issues(): Promise<LoadIssue[]> { return this.local.issues(); }

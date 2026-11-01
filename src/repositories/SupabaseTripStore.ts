@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseSession } from "@/auth/SupabaseSession";
 import type { Trip } from "@/domain/schemas";
 import type { RemoteTripRow, RemoteTripStore } from "./SyncedTripRepository";
 
@@ -13,30 +14,13 @@ export function toDbRow(trip: Trip) {
 }
 
 /**
- * Supabase-backed remote store. Identity is Supabase anonymous auth: the first call creates an anonymous user whose
- * session is kept in this browser; row level security limits every query to that user's own rows.
- * supabase-js is imported lazily so the localStorage-only build never loads it.
+ * Supabase-backed remote store. Identity is whatever the shared SupabaseSession holds: an anonymous user until the
+ * visitor signs up/in with email+password. Row level security limits every query to that user's own rows.
  */
 export class SupabaseTripStore implements RemoteTripStore {
-  private clientP: Promise<SupabaseClient> | null = null;
-  constructor(private readonly url: string, private readonly anonKey: string) {}
+  constructor(private readonly session: SupabaseSession) {}
 
-  private client(): Promise<SupabaseClient> {
-    if (!this.clientP) {
-      this.clientP = (async () => {
-        const { createClient } = await import("@supabase/supabase-js");
-        const c = createClient(this.url, this.anonKey, { auth: { persistSession: true, autoRefreshToken: true, storageKey: "planet:supabase-auth" } });
-        const { data } = await c.auth.getSession();
-        if (!data.session) {
-          const { error } = await c.auth.signInAnonymously();
-          if (error) throw new Error("Supabase sign-in failed: " + error.message);
-        }
-        return c;
-      })();
-      this.clientP.catch(() => { this.clientP = null; }); // allow retry later
-    }
-    return this.clientP;
-  }
+  private client(): Promise<SupabaseClient> { return this.session.ensure(); }
 
   async fetchAll(): Promise<RemoteTripRow[]> {
     const c = await this.client();

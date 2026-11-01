@@ -2,6 +2,7 @@
 //   set -a; . /workspace/.planet-supabase.env; set +a; npx vitest run tests/supabase.live.test.ts
 import { describe, expect, it } from "vitest";
 import { BrowserStorageTripRepository } from "@/repositories/BrowserStorageTripRepository";
+import { SupabaseSession } from "@/auth/SupabaseSession";
 import { SupabaseTripStore } from "@/repositories/SupabaseTripStore";
 import { SyncedTripRepository } from "@/repositories/SyncedTripRepository";
 import { MemoryStore } from "@/repositories/TripRepository";
@@ -13,7 +14,7 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.NEXT_PUBLIC_
 describe.skipIf(!url || !key)("Supabase (live)", () => {
   it("round-trips a trip through the real database and a second 'device' with its own identity sees nothing", async () => {
     const s1 = new MemoryStore();
-    const remote = new SupabaseTripStore(url!, key!);
+    const remote = new SupabaseTripStore(new SupabaseSession(url!, key!));
     const dev1 = new SyncedTripRepository(new BrowserStorageTripRepository(() => s1), remote, () => s1);
     const t = await makeTrip();
     await dev1.save(t);
