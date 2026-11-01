@@ -51,7 +51,7 @@ export class AccountController {
 
   async signOut(force = false): Promise<SignOutOutcome> {
     const s = await this.trips.sync();
-    if (!s.ok && !force) return { ok: false, needsForce: true, error: "Couldn't save your latest changes to your account (are you offline?). Signing out now would remove them from this device." };
+    if (!s.ok && !force) return { ok: false, needsForce: true, error: "Your latest changes haven't been saved yet (are you offline?). Signing out now would lose them." };
     const r = await this.auth.signOut();
     if (!r.ok) return r;
     await this.trips.clearLocal();

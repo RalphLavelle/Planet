@@ -75,7 +75,7 @@ export function AccountMenu() {
       } else if (mode === "signup") {
         const r = await account.signUp(email, password);
         if (!r.ok) setError(r.error);
-        else { setPassword(""); setInfo(r.needsConfirmation ? `We emailed a confirmation link to ${email.trim()}. Open it to finish creating your account. Your trips stay where they are and become part of your account.` : "Account created."); }
+        else { setPassword(""); setInfo(r.needsConfirmation ? `We emailed a confirmation link to ${email.trim()}. Open it to finish creating your account.` : "Account created."); }
       } else if (mode === "reset") {
         const r = await account.sendPasswordReset(email);
         if (!r.ok) setError(r.error); else setInfo(`If ${email.trim()} has an account, a reset link is on its way.`);
@@ -109,7 +109,6 @@ export function AccountMenu() {
           {signedIn && mode !== "newpassword" ? (
             <div className="account-body">
               <p className="account-who">Signed in as <strong>{user!.email}</strong></p>
-              <p className="muted account-note">Your trips sync across every device where you sign in.</p>
               {error && <p className="err" role="alert">{error}</p>}
               <div className="row">
                 <button type="button" className="btn btn-ghost btn-small" disabled={busy} onClick={() => signOut(false)}><LogOut size={16} aria-hidden="true" /> {busy ? "Signing out…" : "Sign out"}</button>
@@ -119,8 +118,6 @@ export function AccountMenu() {
           ) : (
             <form className="account-body" onSubmit={submit} noValidate>
               <h2 className="account-title">{title}</h2>
-              {mode === "signin" && <p className="muted account-note">Sign in to open your account&apos;s trips here. Trips already on this device are added to your account.</p>}
-              {mode === "signup" && <p className="muted account-note">Keeps the trips on this device in your account, so you can open them on your phone and laptop.</p>}
               {user?.isAnonymous && user.pendingEmail && mode !== "newpassword" && <p className="notice account-pending" role="status">Waiting for you to confirm {user.pendingEmail}. Check your inbox.</p>}
               {needEmail && (
                 <div className="field"><label htmlFor="acc-email">Email</label>

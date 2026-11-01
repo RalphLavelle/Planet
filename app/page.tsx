@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowRight, CalendarDays, CloudSun, Info, Map, MapPin, PenLine, RotateCcw, Share2, Sparkles, Wand2 } from "lucide-react";
+import { ArrowRight, CalendarDays, CloudSun, Map, MapPin, PenLine, RotateCcw, Share2, Sparkles, Wand2 } from "lucide-react";
 import { destinationImage } from "@/services/images";
 import { DestinationThemeProvider } from "@/components/theme";
 import { Collapsible } from "@/components/Collapsible";
@@ -11,7 +11,6 @@ import type { LoadIssue, TripSummary } from "@/repositories/TripRepository";
 import { formatDay } from "@/lib/dates";
 import { selectTheme } from "@/themes/registry";
 import { copy } from "@/lib/storageCopy";
-import { useStorageMode } from "@/components/useStorageMode";
 import { backgroundCredit, backgroundSrcSet, pickBackground } from "@/content/cityBackgrounds";
 
 function HomeHero() {
@@ -58,7 +57,6 @@ export default function Home() {
   const [trips, setTrips] = useState<TripSummary[] | null>(null);
   const [issues, setIssues] = useState<LoadIssue[]>([]);
   const [msg, setMsg] = useState("");
-  const mode = useStorageMode();
 
   const load = useCallback(async () => {
     const s = getServices();
@@ -70,10 +68,10 @@ export default function Home() {
   useEffect(() => getServices().account?.onChange((_u, ev) => { if (ev !== "updated") load().catch(() => setTrips([])); }), [load]);
 
   async function reset() {
-    if (!window.confirm(copy.resetConfirm(mode))) return;
+    if (!window.confirm(copy.resetConfirm)) return;
     await getServices().trips.clear();
     await getServices().drafts.clearDraft();
-    setMsg(copy.resetDone(mode));
+    setMsg(copy.resetDone);
     load();
   }
 
@@ -81,12 +79,13 @@ export default function Home() {
     <DestinationThemeProvider>
       <HomeHero />
       <div className="page">
-        <Collapsible id="trips" scope="home" defaultOpen icon={<Map size={20} />} title="Your trips" summary={trips === null ? "Loading…" : copy.tripsSummary(mode, trips.length)}>
+        <Collapsible id="trips" scope="home" defaultOpen icon={<Map size={20} />} title="Your trips" summary={trips === null ? "Loading…" : copy.tripsSummary(trips.length)}>
           {trips === null ? <p className="muted">Loading your trips…</p> : trips.length === 0 ? (
             <div className="empty"><Map size={28} aria-hidden="true" /><p>No trips yet. <Link href="/new">Plan your first trip</Link>.</p></div>
           ) : <ul className="trip-grid">{trips.map((t) => <TripCard key={t.id} t={t} />)}</ul>}
-          {issues.length > 0 && <p className="notice notice-warn" role="status">{issues.length} saved record(s) could not be read and were skipped ({issues[0].reason}). Use “Reset” in “Where your trips live” to clear them.</p>}
+          {issues.length > 0 && <p className="notice notice-warn" role="status">{issues.length} saved record(s) could not be read and were skipped ({issues[0].reason}). Use “Delete all trips” to clear them.</p>}
           {msg && <p className="notice" role="status">{msg}</p>}
+          {(trips?.length || issues.length > 0) ? <div className="row"><button className="btn btn-ghost btn-small" onClick={reset}><RotateCcw size={16} aria-hidden="true" /> {copy.resetButton}</button></div> : null}
         </Collapsible>
 
         <Collapsible id="how" scope="home" icon={<Wand2 size={20} />} title="How it works" summary="Tell us the basics, review the draft, make it yours">
@@ -97,12 +96,6 @@ export default function Home() {
           </section>
         </Collapsible>
 
-        <Collapsible id="storage" scope="home" icon={<Info size={20} />} title="Where your trips live" summary={copy.storageSummary(mode)}>
-          <aside aria-label="About storage">
-            <p>{copy.storageBody(mode)}</p>
-            <div className="row"><button className="btn btn-ghost btn-small" onClick={reset}><RotateCcw size={16} aria-hidden="true" /> Reset — delete all trips</button></div>
-          </aside>
-        </Collapsible>
       </div>
     </DestinationThemeProvider>
   );

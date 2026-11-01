@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { copy, modeFor, NUDGE_SNOOZE_DAYS, shouldShowNudge, type StorageMode } from "@/lib/storageCopy";
+import { copy, modeFor, NUDGE_SNOOZE_DAYS, shouldShowNudge } from "@/lib/storageCopy";
 
-const MODES: StorageMode[] = ["local", "anonymous", "account"];
 const DAY = 86_400_000;
 
 describe("storage mode", () => {
@@ -27,23 +26,19 @@ describe("account nudge", () => {
   });
 });
 
-describe("copy is accurate for each storage mode", () => {
-  it("never claims 'browser only' when trips are in the database", () => {
-    for (const m of ["anonymous", "account"] as const) {
-      const all = [copy.createdToast(m), copy.deleteConfirm(m, "Athens"), copy.deleteHelp(m), copy.notFoundTitle(m), copy.tripsSummary(m, 2), copy.resetConfirm(m), copy.resetDone(m), copy.storageSummary(m), copy.footer(m), copy.localLinkTitle(m), copy.localLinkButton(m)].join("\n");
-      expect(all).not.toMatch(/from this browser|saved in this browser|only in this browser|stored only/i);
-    }
-    expect(copy.deleteConfirm("account", "Athens")).toMatch(/all your devices/);
-    expect(copy.deleteHelp("account")).toMatch(/every device/);
+describe("copy", () => {
+  it("is neutral: never explains where trips are stored, and is the same in every state", () => {
+    const all = [copy.createdToast, copy.deleteConfirm("Athens"), copy.notFoundTitle, copy.notFoundBody, copy.tripsSummary(0), copy.tripsSummary(1), copy.tripsSummary(3), copy.resetConfirm, copy.resetDone, copy.resetButton, copy.localLinkTitle, copy.localLinkBody, copy.localLinkButton, copy.discoveryNote, copy.nudge].join("\n");
+    expect(all).not.toMatch(/browser|device|account's|your account|local storage|localstorage|database|sync/i);
   });
-  it("keeps the localStorage-only wording for builds without a database", () => {
-    expect(copy.deleteConfirm("local", "Athens")).toBe("Delete your Athens guide from this browser?");
-    expect(copy.deleteHelp("local")).toBe("Remove this guide from this browser.");
-    expect(copy.createdToast("local")).toBe("Guide saved to this browser.");
-    expect(copy.notFoundTitle("local")).toBe("Guide not found in this browser");
-    expect(copy.footer("local")).toBe("trips are stored only in this browser");
-  });
-  it("has copy for every mode", () => {
-    for (const m of MODES) for (const f of [copy.createdToast, copy.deleteHelp, copy.notFoundBody, copy.storageBody, copy.footer, copy.resetConfirm]) expect(f(m).length).toBeGreaterThan(10);
+  it("has the agreed wording", () => {
+    expect(copy.createdToast).toBe("Guide saved.");
+    expect(copy.deleteConfirm("Athens")).toBe("Delete your Athens guide? This can't be undone.");
+    expect(copy.resetConfirm).toBe("Delete all your trips? This can't be undone.");
+    expect(copy.notFoundTitle).toBe("Guide not found");
+    expect(copy.localLinkButton).toBe("Copy link");
+    expect(copy.nudge).toBe("Saved. Create an account to keep your trips.");
+    expect(copy.tripsSummary(1)).toBe("1 saved trip");
+    expect(copy.tripsSummary(4)).toBe("4 saved trips");
   });
 });

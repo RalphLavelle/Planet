@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import Link from "next/link";
 import { AccountMenu } from "@/components/AccountMenu";
-import { StorageNote } from "@/components/StorageNote";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
@@ -22,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="topbar-links"><AccountMenu /><Link href="/new" className="btn btn-small">New trip</Link></div>
         </nav>
         <main id="main">{children}</main>
-        <footer className="footer"><p>Planet MVP · <StorageNote />. Content marked “Demo data” is illustrative, not verified. · <Link href="/credits">Photo credits</Link></p></footer>
+        <footer className="footer"><p>Planet MVP · Content marked “Demo data” is illustrative, not verified. · <Link href="/credits">Photo credits</Link></p></footer>
       </body>
     </html>
   );
