@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import Link from "next/link";
+import { AccountMenu } from "@/components/AccountMenu";
+import { StorageNote } from "@/components/StorageNote";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
@@ -17,10 +19,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#main" className="skip">Skip to content</a>
         <nav className="topbar" aria-label="Main">
           <Link href="/" className="brand"><span className="brand-dot" aria-hidden="true" />Planet</Link>
-          <div className="topbar-links"><Link href="/new" className="btn btn-small">New trip</Link></div>
+          <div className="topbar-links"><AccountMenu /><Link href="/new" className="btn btn-small">New trip</Link></div>
         </nav>
         <main id="main">{children}</main>
-        <footer className="footer"><p>Planet MVP · trips are stored only in this browser. Content marked “Demo data” is illustrative, not verified. · <Link href="/credits">Photo credits</Link></p></footer>
+        <footer className="footer"><p>Planet MVP · <StorageNote />. Content marked “Demo data” is illustrative, not verified. · <Link href="/credits">Photo credits</Link></p></footer>
       </body>
     </html>
   );

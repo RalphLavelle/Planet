@@ -75,7 +75,7 @@ app/               Next.js App Router pages: / , /new (3-step wizard), /trip?id=
 `DestinationTheme` = tokens (CSS custom properties), CSS/SVG patterns, divider strip, hero illustration, small motif, sprig. Selection uses structured metadata (`catalogKey`/ISO country), so "Athens, Georgia" gets the neutral theme. Athens: Parthenon-on-hill hero with sun & cypresses, evil-eye (mati) motifs on day headers/nav/badges, Greek-key meander dividers and subtle background, olive sprigs, Aegean/limestone/terracotta/olive palette. Functional icons are Lucide throughout. Add a theme by creating `src/themes/<x>.tsx` and registering it in `registry.ts`.
 
 ## Known limitations
-- Storage is local-first. Optional Supabase sync (anonymous per-browser identity, see `docs/Persistence.md`); no accounts or cross-device sync yet.
+- Storage is local-first. Optional Supabase sync (anonymous per-browser identity by default; optional email+password account to share trips across devices, see `docs/Persistence.md`).
 - OSM embed shows the area of the day's stops but not individual numbered pins (the stops list has per-stop map links). A JS map library or paid provider can be added behind `DirectionsProvider`.
 - Undo history is in-memory (last 20 edits) and resets on reload.
 - Demo catalogue is small; non-catalogue cities get generic suggestions.

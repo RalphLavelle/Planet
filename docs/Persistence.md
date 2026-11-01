@@ -19,9 +19,28 @@ Supabase **anonymous auth**: the first load in a browser calls `signInAnonymousl
 localStorage (`planet:supabase-auth`). `owner_id` defaults to `auth.uid()` and row level security allows select/insert/
 update/delete only where `owner_id = auth.uid()`; the `anon` role has no table privileges. So the public anon key
 cannot read anybody's trips, and two browsers never see each other's data.
-Limits: an anonymous identity is per browser profile. Clearing site data loses the session (rows become unreachable), and
-phone and laptop are *different* identities, so cross-device sync needs a sign-in step (planned: upgrade the anonymous user
-with an email magic link via `supabase.auth.updateUser({ email })`, which keeps `owner_id`; then sign in with it on the second device).
+
+### Accounts (email + password)
+The top-bar account control (`src/components/AccountMenu.tsx`, only shown when Supabase is configured) offers:
+- **Create account**: while the browser has an anonymous session this calls `auth.updateUser({ email, password })`, which attaches the
+  credentials to the *same* user id, so existing trips keep their `owner_id`. Supabase emails a confirmation link; after it is clicked the
+  user is permanent. (With no session it falls back to `auth.signUp`.)
+- **Sign in** (`signInWithPassword`) on another device: the session switches to the account, then a sync runs, which uploads every trip
+  cached on this device (made anonymously or offline) into the account and downloads the account's trips. Nothing on the device is dropped.
+- **Sign out**: syncs first (refuses if that fails, unless forced), ends the session on this device only, and clears the local trip cache so
+  the next person/identity on a shared browser starts clean. Trips are safe in the database.
+- **Forgot password**: `resetPasswordForEmail`; the link returns to the app, which shows a "Choose a new password" form.
+Logic lives in `src/auth/` (`AccountController` is backend-agnostic and unit tested; `SupabaseAuth` / `SupabaseSession` talk to Supabase).
+Not built: Google/OAuth, changing email, deleting an account, and cleanup of orphaned anonymous users left behind when a device signs in to an existing account.
+
+### Supabase Auth settings this relies on
+- Anonymous sign-ins: on. Email provider: on, **email confirmation: on** (`mailer_autoconfirm=false`).
+- Site URL = the live app URL; redirect allow-list includes it and `http://localhost:3000/**`.
+- `mailer_secure_email_change_enabled=false`: with it on, linking an email to an anonymous user fails ("Email address \"\" is invalid") because
+  Supabase tries to notify the user's (empty) current email.
+- Password minimum length 8 (matches the client).
+- **Email limits**: the built-in Supabase mailer is capped (currently `rate_limit_email_sent` = 2 emails per hour for the whole project) and is intended for
+  development; every confirmation and reset email counts. Configure custom SMTP (Project Settings > Authentication > SMTP) before real use.
 
 ## Sync rules (`src/repositories/SyncedTripRepository.ts`)
 - Reads/writes go to localStorage first; `save` then upserts remotely (failure is non-fatal and recorded in `syncState`).

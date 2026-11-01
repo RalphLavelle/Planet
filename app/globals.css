@@ -435,3 +435,23 @@ input[aria-invalid=true] { border-color: #b3261e; }
 .collapsible.preview-day .activities { margin-top: var(--space-1); }
 .collapsible.preview-day .add-btn { margin-left: calc(var(--time-col) + var(--space-3)); }
 .collapsible.preview-day > .collapsible-body { padding: 0 var(--space-2) var(--space-3); }
+
+/* Account control (top bar) */
+.account { position: relative; }
+.account-btn { max-width: 190px; }
+.account-btn-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-panel { position: absolute; right: 0; top: calc(100% + 8px); width: min(340px, calc(100vw - 24px)); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); z-index: 30; }
+.account-body { display: grid; gap: var(--space-3); padding: var(--space-4); }
+.account-title { font-family: var(--serif); font-size: 1.15rem; margin: 0; }
+.account-who { margin: 0; overflow-wrap: anywhere; }
+.account-note { margin: 0; font-size: .85rem; }
+.account-pending { margin: 0; }
+.account-switch { margin: 0; font-size: .88rem; color: var(--muted); }
+.linklike { background: none; border: 0; padding: 0; font: inherit; color: var(--primary); text-decoration: underline; cursor: pointer; min-height: 32px; }
+input[type=email], input[type=password] { font: inherit; padding: 10px 12px; border: 1px solid #cfc8bc; border-radius: var(--radius-s); background: #fff; color: var(--ink); width: 100%; min-height: 44px; }
+@media (max-width: 520px) {
+  .topbar-links { gap: var(--space-2); }
+  .account { position: static; }
+  .account-panel { position: fixed; left: 12px; right: 12px; top: 60px; width: auto; max-height: calc(100vh - 80px); overflow-y: auto; }
+  .account-btn { max-width: 120px; }
+}
