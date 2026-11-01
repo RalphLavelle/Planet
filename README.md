@@ -41,6 +41,7 @@ app/               Next.js App Router pages: / , /new (3-step wizard), /trip?id=
 - Every read is Zod-validated; corrupt/unknown records are skipped and reported (`issues()`), with a "Reset" action on the home page. Records carry `schemaVersion`; `repositories/migrations.ts` upgrades old records on read.
 
 ### Browser persistence
+- Optional database sync to Supabase on top of this: see [docs/Persistence.md](docs/Persistence.md).
 - **localStorage** (`planet:trip:<id>`, one record per trip): saved trips. Survive reloads/restarts in this browser.
 - **sessionStorage** (`planet:draft`): the generated-but-unconfirmed draft in the wizard — disappears with the tab, by design.
 - **localStorage cache** (`planet:cache:*`): last weather/FX responses so the guide can show cached/stale data when offline.
@@ -74,7 +75,7 @@ app/               Next.js App Router pages: / , /new (3-step wizard), /trip?id=
 `DestinationTheme` = tokens (CSS custom properties), CSS/SVG patterns, divider strip, hero illustration, small motif, sprig. Selection uses structured metadata (`catalogKey`/ISO country), so "Athens, Georgia" gets the neutral theme. Athens: Parthenon-on-hill hero with sun & cypresses, evil-eye (mati) motifs on day headers/nav/badges, Greek-key meander dividers and subtle background, olive sprigs, Aegean/limestone/terracotta/olive palette. Functional icons are Lucide throughout. Add a theme by creating `src/themes/<x>.tsx` and registering it in `registry.ts`.
 
 ## Known limitations
-- Local-only storage; no auth or cross-device sync (by design for the MVP).
+- Storage is local-first. Optional Supabase sync (anonymous per-browser identity, see `docs/Persistence.md`); no accounts or cross-device sync yet.
 - OSM embed shows the area of the day's stops but not individual numbered pins (the stops list has per-stop map links). A JS map library or paid provider can be added behind `DirectionsProvider`.
 - Undo history is in-memory (last 20 edits) and resets on reload.
 - Demo catalogue is small; non-catalogue cities get generic suggestions.

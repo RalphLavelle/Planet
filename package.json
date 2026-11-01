@@ -12,6 +12,7 @@
     "build:static": "STATIC_EXPORT=1 next build"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.109.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.57.0",
     "next": "^14.2.15",

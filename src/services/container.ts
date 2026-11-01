@@ -1,4 +1,6 @@
 import { LocalStorageTripRepository, SessionStorageDraftRepository } from "@/repositories/BrowserStorageTripRepository";
+import { SyncedTripRepository } from "@/repositories/SyncedTripRepository";
+import { SupabaseTripStore } from "@/repositories/SupabaseTripStore";
 import type { DraftRepository, TripRepository } from "@/repositories/TripRepository";
 import { DemoItineraryGenerator } from "./itinerary/DemoItineraryGenerator";
 import type { ItineraryGenerator } from "./itinerary/ItineraryGenerator";
@@ -14,7 +16,8 @@ import { OsmRestaurantFinder, type RestaurantFinder } from "./restaurants";
 
 /**
  * THE composition root. The only place concrete repositories/providers are chosen.
- * To switch persistence, add a case for e.g. "supabase" returning new SupabaseTripRepository(...).
+ * Persistence: localStorage always; when NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are both set at
+ * build time, trips additionally sync to Supabase (local-first). Without them the app is localStorage-only.
  */
 export interface Services {
   trips: TripRepository;
@@ -32,13 +35,14 @@ let instance: Services | null = null;
 
 export function getServices(): Services {
   if (instance) return instance;
-  const repoKind = process.env.NEXT_PUBLIC_TRIP_REPOSITORY ?? "local";
-  let trips: TripRepository;
-  switch (repoKind) {
-    case "local":
-    default:
-      trips = new LocalStorageTripRepository();
-  }
+  // NEXT_PUBLIC_* must be referenced literally so Next.js can inline them.
+  const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supaKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const local = new LocalStorageTripRepository();
+  const synced = !!supaUrl && !!supaKey && process.env.NEXT_PUBLIC_TRIP_REPOSITORY !== "local";
+  const trips: TripRepository = synced
+    ? new SyncedTripRepository(local, new SupabaseTripStore(supaUrl, supaKey), () => (typeof window === "undefined" ? null : window.localStorage))
+    : local;
   const weather = process.env.NEXT_PUBLIC_WEATHER_PROVIDER === "demo" ? new DemoWeatherProvider() : new OpenMeteoWeatherProvider();
   const ls = () => (typeof window === "undefined" ? null : window.localStorage);
   instance = {
@@ -50,7 +54,7 @@ export function getServices(): Services {
     uiPrefs: new UiPrefs(() => (typeof window === "undefined" ? null : window.localStorage)),
     restaurants: new OsmRestaurantFinder(() => (typeof window === "undefined" ? null : window.localStorage)),
     geocoder: new NominatimGeocoder(() => (typeof window === "undefined" ? null : window.localStorage)),
-    persistenceLabel: "This browser only (localStorage)",
+    persistenceLabel: synced ? "Saved to your Planet database (Supabase) and cached in this browser" : "This browser only (localStorage)",
   };
   return instance;
 }
