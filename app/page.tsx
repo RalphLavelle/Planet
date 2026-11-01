@@ -10,6 +10,8 @@ import { resolveDestination } from "@/services/itinerary/DemoItineraryGenerator"
 import type { LoadIssue, TripSummary } from "@/repositories/TripRepository";
 import { formatDay } from "@/lib/dates";
 import { selectTheme } from "@/themes/registry";
+import { copy } from "@/lib/storageCopy";
+import { useStorageMode } from "@/components/useStorageMode";
 import { backgroundCredit, backgroundSrcSet, pickBackground } from "@/content/cityBackgrounds";
 
 function HomeHero() {
@@ -56,8 +58,7 @@ export default function Home() {
   const [trips, setTrips] = useState<TripSummary[] | null>(null);
   const [issues, setIssues] = useState<LoadIssue[]>([]);
   const [msg, setMsg] = useState("");
-  const [synced, setSynced] = useState(false);
-  useEffect(() => { setSynced(!!getServices().account); }, []);
+  const mode = useStorageMode();
 
   const load = useCallback(async () => {
     const s = getServices();
@@ -69,10 +70,10 @@ export default function Home() {
   useEffect(() => getServices().account?.onChange((_u, ev) => { if (ev !== "updated") load().catch(() => setTrips([])); }), [load]);
 
   async function reset() {
-    if (!window.confirm(synced ? "Delete ALL your trips, here and in your Planet database (so on every device)? This cannot be undone." : "Delete all trips saved in this browser? This cannot be undone.")) return;
+    if (!window.confirm(copy.resetConfirm(mode))) return;
     await getServices().trips.clear();
     await getServices().drafts.clearDraft();
-    setMsg(synced ? "All your trips were deleted." : "All local trips were deleted.");
+    setMsg(copy.resetDone(mode));
     load();
   }
 
@@ -80,7 +81,7 @@ export default function Home() {
     <DestinationThemeProvider>
       <HomeHero />
       <div className="page">
-        <Collapsible id="trips" scope="home" defaultOpen icon={<Map size={20} />} title="Your trips" summary={trips === null ? "Loading…" : synced ? `${trips.length} on this device` : `${trips.length} saved in this browser`}>
+        <Collapsible id="trips" scope="home" defaultOpen icon={<Map size={20} />} title="Your trips" summary={trips === null ? "Loading…" : copy.tripsSummary(mode, trips.length)}>
           {trips === null ? <p className="muted">Loading your trips…</p> : trips.length === 0 ? (
             <div className="empty"><Map size={28} aria-hidden="true" /><p>No trips yet. <Link href="/new">Plan your first trip</Link>.</p></div>
           ) : <ul className="trip-grid">{trips.map((t) => <TripCard key={t.id} t={t} />)}</ul>}
@@ -96,11 +97,9 @@ export default function Home() {
           </section>
         </Collapsible>
 
-        <Collapsible id="storage" scope="home" icon={<Info size={20} />} title="Where your trips live" summary={synced ? "This browser, plus your account when signed in" : "Saved in this browser only"}>
+        <Collapsible id="storage" scope="home" icon={<Info size={20} />} title="Where your trips live" summary={copy.storageSummary(mode)}>
           <aside aria-label="About storage">
-            {synced
-              ? <p>Trips are saved in this browser and copied to your Planet database. Sign in with your email and password (top right) to open the same trips on your phone and laptop. Without signing in, your trips belong to this browser only and clearing browser data loses access to them. Storage isn&apos;t end-to-end encrypted, so don&apos;t store confidential details. To share a guide, use the portable snapshot link on a trip page.</p>
-              : <p>Trips are saved in this browser&apos;s local storage on this device only. Clearing browser data deletes them, they don&apos;t sync to other devices, and storage isn&apos;t encrypted — don&apos;t store confidential details. To share a guide, use the portable snapshot link on a trip page.</p>}
+            <p>{copy.storageBody(mode)}</p>
             <div className="row"><button className="btn btn-ghost btn-small" onClick={reset}><RotateCcw size={16} aria-hidden="true" /> Reset — delete all trips</button></div>
           </aside>
         </Collapsible>

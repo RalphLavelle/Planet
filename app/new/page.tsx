@@ -16,6 +16,7 @@ import { formatDay } from "@/lib/dates";
 import { getServices } from "@/services/container";
 import { generateTrip, generationNotice } from "@/services/trips";
 import { CATALOG } from "@/services/itinerary/catalog";
+import { copy } from "@/lib/storageCopy";
 
 const CURRENCIES = ["GBP", "EUR", "USD", "TRY", "JPY", "AUD", "CAD", "CHF", "SEK", "NOK", "DKK"];
 function isoIn(days: number) { const d = new Date(); d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10); }
@@ -168,7 +169,7 @@ export default function NewTrip() {
               <button type="button" className="btn btn-ghost" onClick={() => setStep(0)}><ArrowLeft size={18} aria-hidden="true" /> Back</button>
               <button className="btn" type="submit" disabled={busy}><Sparkles size={18} aria-hidden="true" /> {busy ? "Drafting…" : "Generate itinerary"}</button>
             </div>
-            {busy && <p className="notice gen-progress" role="status" aria-live="polite"><Loader2 size={16} className="spin" aria-hidden="true" /> {progress || "Drafting…"}{!resolveDestination(destination || " ").catalog && <span className="muted"> Finding real places can take 10–30 seconds the first time; results are then saved in this browser.</span>}</p>}
+            {busy && <p className="notice gen-progress" role="status" aria-live="polite"><Loader2 size={16} className="spin" aria-hidden="true" /> {progress || "Drafting…"}{!resolveDestination(destination || " ").catalog && <span className="muted"> {copy.discoveryNote}</span>}</p>}
           </form>
         )}
 

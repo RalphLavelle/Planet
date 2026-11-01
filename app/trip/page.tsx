@@ -8,15 +8,19 @@ import { TripGuide } from "@/components/TripGuide";
 import type { Trip } from "@/domain/schemas";
 import { getServices } from "@/services/container";
 import { mergeRegenerated } from "@/services/editing";
+import { copy } from "@/lib/storageCopy";
+import { SaveNudge } from "@/components/SaveNudge";
+import { useStorageMode } from "@/components/useStorageMode";
 
 function TripPageInner() {
   const params = useSearchParams();
   const id = params.get("id") ?? "";
   const created = params.get("created");
   const router = useRouter();
+  const mode = useStorageMode();
   const [trip, setTrip] = useState<Trip | null | undefined>(undefined);
   const [history, setHistory] = useState<{ trip: Trip; label: string }[]>([]);
-  const [toast, setToast] = useState<{ text: string; error?: boolean } | null>(created ? { text: "Guide saved to this browser." } : null);
+  const [toast, setToast] = useState<{ text: string; error?: boolean } | null>(created ? { text: copy.createdToast(mode) } : null);
   const seed = useRef(1);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -49,7 +53,7 @@ function TripPageInner() {
   }
 
   async function remove() {
-    if (!trip || !window.confirm(`Delete your ${trip.destination.name} guide from this browser?`)) return;
+    if (!trip || !window.confirm(copy.deleteConfirm(mode, trip.destination.name))) return;
     await getServices().trips.delete(trip.id);
     router.push("/");
   }
@@ -57,8 +61,8 @@ function TripPageInner() {
   if (trip === undefined) return <div className="page"><p className="muted loading">Opening your guide…</p></div>;
   if (trip === null) return (
     <div className="page narrow"><div className="card">
-      <h1>Guide not found in this browser</h1>
-      <p>Planet stores trips only in the browser where they were created. A local guide link won&apos;t open on another device or browser, and clearing browser data removes saved trips.</p>
+      <h1>{copy.notFoundTitle(mode)}</h1>
+      <p>{copy.notFoundBody(mode)}</p>
       <p>If someone shared this with you, ask them for the <strong>portable read-only link</strong>.</p>
       <Link className="btn" href="/">Back to home</Link>
     </div></div>
@@ -67,9 +71,10 @@ function TripPageInner() {
   return (
     <DestinationThemeProvider destination={trip.destination}>
       <div className="page">
+        {created && <SaveNudge />}
         <TripGuide trip={trip} onChange={(n, l) => persist(n, l, trip)} onRegenerate={regenerate} />
         <section className="panel row between danger-zone" aria-label="Delete">
-          <p className="muted">Remove this guide from this browser.</p>
+          <p className="muted">{copy.deleteHelp(mode)}</p>
           <button className="btn btn-ghost danger" onClick={remove}><Trash2 size={16} aria-hidden="true" /> Delete trip</button>
         </section>
       </div>

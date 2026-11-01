@@ -455,3 +455,7 @@ input[type=email], input[type=password] { font: inherit; padding: 10px 12px; bor
   .account-panel { position: fixed; left: 12px; right: 12px; top: 60px; width: auto; max-height: calc(100vh - 80px); overflow-y: auto; }
   .account-btn { max-width: 120px; }
 }
+
+/* "Create an account" nudge after saving a trip */
+.save-nudge { justify-content: space-between; align-items: center; margin: 0 0 var(--space-4); }
+.save-nudge-text { margin: 0; flex: 1 1 220px; }

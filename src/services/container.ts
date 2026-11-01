@@ -38,13 +38,19 @@ export interface Services {
 
 let instance: Services | null = null;
 
+/** True when this build syncs trips to Supabase. Safe to call during SSR (reads build-time env only). */
+export function isSyncConfigured(): boolean {
+  // NEXT_PUBLIC_* must be referenced literally so Next.js can inline them.
+  return !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && process.env.NEXT_PUBLIC_TRIP_REPOSITORY !== "local";
+}
+
 export function getServices(): Services {
   if (instance) return instance;
   // NEXT_PUBLIC_* must be referenced literally so Next.js can inline them.
   const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supaKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const local = new LocalStorageTripRepository();
-  const synced = !!supaUrl && !!supaKey && process.env.NEXT_PUBLIC_TRIP_REPOSITORY !== "local";
+  const synced = isSyncConfigured() && !!supaUrl && !!supaKey;
   const lsOrNull = () => (typeof window === "undefined" ? null : window.localStorage);
   let trips: TripRepository = local;
   let account: AccountController | null = null;

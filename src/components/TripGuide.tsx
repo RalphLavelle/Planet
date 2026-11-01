@@ -20,6 +20,8 @@ import { Collapsible } from "./Collapsible";
 import { DayHeader, dayBannerPhotos } from "./DayHeader";
 import { displayDayTitle } from "@/domain/dayTitles";
 import { AddItem } from "./AddItem";
+import { copy as words } from "@/lib/storageCopy";
+import { useStorageMode } from "./useStorageMode";
 import type { GeoPoint } from "@/domain/schemas";
 import { ActivityCategoryIcon, PhotoCredit, StatusBadge } from "./ui";
 
@@ -57,6 +59,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip.accommodation, trip.destination.name]);
   const [copied, setCopied] = useState("");
+  const mode = useStorageMode();
   const banners = dayBannerPhotos(trip.days);
   const heroPhoto = tripHeroImage(trip.destination);
   const catalog = trip.destination.catalogKey ? findCatalogDestination(trip.destination.catalogKey) : undefined;
@@ -206,9 +209,9 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
           <Collapsible id="share" scope={trip.id} icon={<Share2 size={20} />} title="Share & keep" summary="Links and regenerate">
             <div className="share">
             <div className="share-col">
-              <h3><Link2 size={16} aria-hidden="true" /> Local guide link</h3>
-              <p className="muted">Reopens this trip <strong>in this browser on this device only</strong>. Sending it to someone else won&apos;t show them anything.</p>
-              <button className="btn btn-ghost btn-small" onClick={() => copy(localUrl, "local")}><Copy size={14} aria-hidden="true" /> {copied === "local" ? "Copied!" : "Copy local link"}</button>
+              <h3><Link2 size={16} aria-hidden="true" /> {words.localLinkTitle(mode)}</h3>
+              <p className="muted">{words.localLinkBody(mode)}</p>
+              <button className="btn btn-ghost btn-small" onClick={() => copy(localUrl, "local")}><Copy size={14} aria-hidden="true" /> {copied === "local" ? "Copied!" : words.localLinkButton(mode)}</button>
             </div>
             <div className="share-col">
               <h3><ExternalLink size={16} aria-hidden="true" /> Portable read-only link</h3>
