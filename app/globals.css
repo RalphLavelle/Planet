@@ -123,8 +123,9 @@ input[aria-invalid=true] { border-color: #b3261e; }
 .spin { animation: spin 1s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
 
 /* Day nav */
-.day-nav { position: sticky; top: 61px; z-index: 10; display: flex; gap: var(--space-2); overflow-x: auto; padding: var(--space-2) 0; margin: var(--space-4) 0; background: var(--bg); }
-.day-nav a { flex: 0 0 auto; display: grid; justify-items: center; padding: 8px 14px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--surface); text-decoration: none; color: var(--ink); font-weight: 600; font-size: .9rem; position: relative; }
+.day-nav { position: sticky; top: 61px; z-index: 10; display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: var(--space-2); padding: var(--space-2) 0; margin: var(--space-4) 0; background: var(--bg); }
+.day-nav.day-nav-many { position: static; }
+.day-nav a { min-width: 0; display: grid; justify-items: center; padding: 8px 6px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--surface); text-decoration: none; color: var(--ink); font-weight: 600; font-size: .9rem; position: relative; }
 .day-nav a small { font-weight: 400; color: var(--muted); font-size: .75rem; }
 .day-nav a.on { border-color: var(--primary); box-shadow: inset 0 -3px 0 var(--primary); }
 .day-nav-motif { position: absolute; top: -6px; right: -6px; opacity: 0; transition: opacity .2s; } .day-nav a.on .day-nav-motif { opacity: 1; }
@@ -220,7 +221,8 @@ input[aria-invalid=true] { border-color: #b3261e; }
 .cat-badge .motif { margin-right: 2px; }
 .tag { display: inline-flex; gap: 4px; align-items: center; }
 .wx-strip small { display: inline-flex; align-items: center; gap: 3px; }
-.day-nav-title { display: inline-flex; gap: 5px; align-items: center; }
+.day-nav-title { display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; }
+.day-nav-many .day-nav-title svg { display: none; }
 .stops li > svg { color: var(--secondary); }
 
 /* Home: photo trip cards & featured */
@@ -256,10 +258,6 @@ input[aria-invalid=true] { border-color: #b3261e; }
 .flight-add { margin: 0 0 var(--space-3); }
 .flight-fields { border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space-4); display: grid; gap: var(--space-3); }
 .flight-fields legend { padding: 0 6px; }
-.minimap { position: relative; margin-top: var(--space-3); }
-.minimap-canvas { height: 170px; border-radius: var(--radius-s); overflow: hidden; background: #e9e6df; border: 1px solid var(--line); z-index: 0; }
-.minimap-dist { display: inline-flex; gap: 5px; align-items: center; font-size: .78rem; color: var(--muted); margin: 6px 0 0; }
-.minimap-attr { position: absolute; right: 6px; top: 148px; margin: 0; font-size: .6rem; background: rgba(255,255,255,.8); padding: 1px 4px; border-radius: 4px; color: #333; }
 .pin span { display: block; width: 18px; height: 18px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
 .pin-home span { background: #1f2a37; border-radius: 4px; transform: none; position: relative; }
 .pin-home span::after { content: "⌂"; color: #fff; position: absolute; inset: 0; display: grid; place-items: center; font-size: 12px; line-height: 1; }
@@ -290,8 +288,6 @@ input[aria-invalid=true] { border-color: #b3261e; }
 .day-banner.has-photo .title-reset { color: #fff; border-color: rgba(255,255,255,.6); }
 .title-edit { display: flex; gap: 6px; align-items: center; }
 .title-edit input { font: 600 1.3rem var(--serif); max-width: 520px; }
-.day-toggle { flex: none; width: 42px; height: 42px; }
-.day-toggle svg { transition: transform .2s; } .day-toggle .rot { transform: rotate(180deg); }
 .day-summary { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; margin-top: var(--space-2); }
 .day-count { display: inline-flex; gap: 5px; align-items: center; font-size: .85rem; font-weight: 600; }
 .thumb-strip { list-style: none; display: flex; gap: 6px; padding: 0; margin: 0; flex-wrap: wrap; }
@@ -384,7 +380,6 @@ input[aria-invalid=true] { border-color: #b3261e; }
 .collapsible.preview-day { margin-bottom: var(--space-3); }
 .collapsible.preview-day .collapsible-label { font-size: 1.05rem; }
 /* Tap targets ≥ 44px for the collapse controls */
-.day-toggle { width: 44px; height: 44px; }
 .day-controls .btn, .collapsible-actions .btn { min-height: 44px; }
 
 /* ===== Aligned item rows: one fixed grid shared by every day (time | thumbnail | content) ===== */
@@ -421,20 +416,9 @@ input[aria-invalid=true] { border-color: #b3261e; }
 .item-editor .grid2 { grid-template-columns: 1fr 1fr; gap: var(--space-3); }
 .item-editor .grid-day { grid-template-columns: 1.5fr 1fr; }
 
-/* ===== Row affordance: the whole row reads as tappable ===== */
-.activity-card.is-editable { padding-right: calc(var(--space-3) + 28px); }
-@media (min-width: 680px) { .activity-card.is-editable { padding-right: calc(var(--space-4) + 64px); } }
-.row-cue { position: absolute; right: var(--space-2); top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center; gap: 2px; color: var(--primary); pointer-events: none; opacity: .75; }
-.row-cue-label { display: none; font: 600 .8rem var(--sans); }
-@media (min-width: 680px) { .row-cue { right: var(--space-4); } .row-cue-label { display: inline; } }
-.activity-card.is-editable:hover { background: color-mix(in srgb, var(--primary) 4%, var(--surface)); border-color: color-mix(in srgb, var(--primary) 55%, var(--line)); box-shadow: 0 4px 16px rgba(20,30,50,.12); }
-.activity-card.is-editable:hover .row-cue { opacity: 1; transform: translateY(-50%) translateX(2px); }
-.activity-card.is-editable:active { background: color-mix(in srgb, var(--primary) 10%, var(--surface)); transform: scale(.992); box-shadow: var(--shadow); }
-.activity-card.is-editable { -webkit-tap-highlight-color: color-mix(in srgb, var(--primary) 18%, transparent); touch-action: manipulation; }
-.row-cue { transition: transform .15s, opacity .15s; }
 .collapsible.preview-day .activities { margin-top: var(--space-1); }
 .collapsible.preview-day .add-btn { margin-left: calc(var(--time-col) + var(--space-3)); }
-.collapsible.preview-day > .collapsible-body { padding: 0 var(--space-2) var(--space-3); }
+
 
 /* Account control (top bar) */
 .account { position: relative; }
@@ -459,3 +443,46 @@ input[type=email], input[type=password] { font: inherit; padding: 10px 12px; bor
 /* "Create an account" nudge after saving a trip */
 .save-nudge { justify-content: space-between; align-items: center; margin: 0 0 var(--space-4); }
 .save-nudge-text { margin: 0; flex: 1 1 220px; }
+
+/* ===== Mobile batch ===== */
+/* Day banner: the whole header is one tap target (the title button's ::after covers the banner). */
+.day-banner.has-photo .day-banner-inner { align-self: stretch; }
+.day-hit { all: unset; box-sizing: border-box; cursor: pointer; font: inherit; color: inherit; text-shadow: inherit; }
+.day-hit::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+.day-hit:focus-visible { outline: none; }
+.day-banner:has(.day-hit:focus-visible) { outline: 3px solid var(--secondary); outline-offset: 2px; }
+.day-banner .title-btn, .day-banner .title-reset, .day-banner .photo-credit, .day-banner .title-edit { position: relative; z-index: 2; }
+.day-banner .photo-credit { position: absolute; }
+.day-banner { -webkit-tap-highlight-color: color-mix(in srgb, var(--primary) 18%, transparent); touch-action: manipulation; }
+.day-chevron { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.92); color: #1f2a37; border: 1px solid rgba(0,0,0,.08); pointer-events: none; }
+.day-banner:not(.has-photo) .day-chevron { background: var(--surface); color: var(--primary); border-color: var(--line); }
+.day-chevron svg { transition: transform .2s; } .day-chevron .rot { transform: rotate(180deg); }
+
+/* Item rows: an obvious edit cue on every screen size (icon + label, full opacity). */
+.activity-card.is-editable { padding-right: calc(var(--space-3) + 28px); }
+.row-cue { position: absolute; right: 4px; top: var(--space-3); display: flex; flex-direction: column; align-items: center; gap: 3px; width: 32px; padding: 6px 0 5px; border-radius: 10px; color: var(--primary); background: color-mix(in srgb, var(--primary) 11%, var(--surface)); border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--line)); pointer-events: none; transition: background .15s, transform .15s; }
+.row-cue-label { display: block; font: 700 .64rem/1 var(--sans); letter-spacing: .02em; text-transform: uppercase; }
+@media (min-width: 680px) { .activity-card.is-editable { padding-right: calc(var(--space-4) + 56px); } .row-cue { right: var(--space-4); top: var(--space-4); width: 44px; } .row-cue-label { font-size: .68rem; } .activity-card.is-editable > .minimap { margin-right: -56px; } }
+.activity-card.is-editable:hover { background: color-mix(in srgb, var(--primary) 4%, var(--surface)); border-color: color-mix(in srgb, var(--primary) 55%, var(--line)); box-shadow: 0 4px 16px rgba(20,30,50,.12); }
+.activity-card.is-editable:hover .row-cue { background: color-mix(in srgb, var(--primary) 20%, var(--surface)); }
+.activity-card.is-editable:active { background: color-mix(in srgb, var(--primary) 10%, var(--surface)); transform: scale(.992); box-shadow: var(--shadow); }
+.activity-card.is-editable { -webkit-tap-highlight-color: color-mix(in srgb, var(--primary) 18%, transparent); touch-action: manipulation; }
+
+/* Draft preview: give item rows the same width as the saved guide (no extra panel padding or borders around them). */
+.collapsible.preview-day > .collapsible-body { padding: 0 0 var(--space-3); margin: 0 -1px; }
+
+/* Stop map: small preview that expands into a larger interactive panel (spans the full card width). */
+.activity .activity-card > .minimap { grid-column: 1 / -1; margin-top: var(--space-3); }
+.activity-card.is-editable > .minimap { margin-right: calc(-1 * 28px); }
+.minimap { position: relative; }
+.minimap-frame { position: relative; }
+.minimap-canvas { height: 112px; border-radius: var(--radius-s); overflow: hidden; background: #e9e6df; border: 1px solid var(--line); z-index: 0; }
+.minimap.is-expanded .minimap-canvas { height: min(58vh, 340px); }
+/* The button always covers the map (a big tap target); the pill is its visible label. Expanded: only the corner pill is clickable so the map can be dragged. */
+.minimap-toggle { position: absolute; inset: 0; z-index: 1000; display: flex; align-items: flex-start; justify-content: flex-end; padding: 8px; background: transparent; border: 0; border-radius: var(--radius-s); cursor: pointer; font: inherit; }
+.minimap.is-expanded .minimap-toggle { inset: 8px 8px auto auto; padding: 0; }
+.minimap-pill { display: inline-flex; align-items: center; gap: 5px; min-height: 32px; padding: 4px 11px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--line)); background: rgba(255,255,255,.96); color: var(--primary); font: 700 .78rem var(--sans); box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+.minimap-toggle:focus-visible { outline: 3px solid var(--secondary); outline-offset: 2px; }
+.minimap-dist { display: inline-flex; gap: 5px; align-items: center; font-size: .78rem; color: var(--muted); margin: 6px 0 0; }
+.minimap-attr { position: absolute; right: 6px; bottom: 6px; z-index: 500; margin: 0; font-size: .6rem; background: rgba(255,255,255,.85); padding: 1px 5px; border-radius: 4px; color: #333; text-decoration: none; }
+.minimap .leaflet-control-attribution { font-size: .62rem; }

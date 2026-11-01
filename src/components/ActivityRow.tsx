@@ -1,5 +1,5 @@
 "use client";
-import { ChevronRight, Clock, CloudRain, Home, MapPin, Navigation, Pencil, Trees, Wallet } from "lucide-react";
+import { Clock, CloudRain, Home, MapPin, Navigation, Pencil, Trees, Wallet } from "lucide-react";
 import type { Activity, GeoPoint, Trip } from "@/domain/schemas";
 import { formatEstimate } from "@/domain/money";
 import { formatDuration } from "@/lib/dates";
@@ -68,14 +68,13 @@ export function ActivityRow({ trip, dayId, activity: a, readOnly, editing, onEdi
                   : a.origin === "generated" ? <li className="muted"><Wallet size={14} aria-hidden="true" /> Cost unknown</li> : null}
                 {a.location && <li><a href={getServices().directions.directionsUrl(a.location, trip.accommodation ? `${trip.accommodation}, ${trip.destination.name}` : undefined)} target="_blank" rel="noopener noreferrer"><Navigation size={14} aria-hidden="true" /> Directions<span className="sr-only"> to {a.title} (opens Google Maps)</span></a></li>}
               </ul>
-              {(!a.venue && a.description) || (a.origin === "generated" && a.meta.status !== "demo") || a.location || photoOf(a) ? (
-                <Collapsible id={`act-${a.id}`} scope={trip.id} level={5} variant="inline" title="Details" summary={a.venue ? undefined : a.description ? a.description.slice(0, 70) + (a.description.length > 70 ? "…" : "") : a.location ? "Map, opening hours" : undefined}>
+              {(!a.venue && a.description) || (a.origin === "generated" && a.meta.status !== "demo") || photoOf(a) ? (
+                <Collapsible id={`act-${a.id}`} scope={trip.id} level={5} variant="inline" title="Details" summary={a.venue ? undefined : a.description ? a.description.slice(0, 70) + (a.description.length > 70 ? "…" : "") : "Opening hours, sources"}>
                   {!a.venue && a.description && <p className="desc">{a.description}</p>}
                   {a.origin === "generated" && a.meta.status !== "demo" && (
                     <p className="src-line muted">{a.openingHoursNote ?? "Opening hours unknown — check before you go."}{a.sourceUrl && <> · <a href={a.sourceUrl} target="_blank" rel="noopener noreferrer">{a.sourceUrl.includes("wikipedia.org") ? "Wikipedia" : "OpenStreetMap"}</a></>}</p>
                   )}
                   {photoOf(a) && <p className="src-line muted">Photo: {photoOf(a)!.author} · {photoOf(a)!.license} · <a href={photoOf(a)!.sourceUrl} target="_blank" rel="noopener noreferrer">source</a></p>}
-                  {a.location && <MiniMap stop={a.location} base={base} accent={theme.tokens.secondary} />}
                 </Collapsible>
               ) : null}
               {suggestion && !readOnly && (
@@ -85,7 +84,8 @@ export function ActivityRow({ trip, dayId, activity: a, readOnly, editing, onEdi
               )}
             </>
         </div>
-        {!readOnly && <span className="row-cue" aria-hidden="true"><span className="row-cue-label">Edit</span><ChevronRight size={20} /></span>}
+        {a.location && <MiniMap stop={a.location} base={base} accent={theme.tokens.secondary} title={a.title} />}
+        {!readOnly && <span className="row-cue" aria-hidden="true"><Pencil size={15} /><span className="row-cue-label">Edit</span></span>}
       </article>
       )}
     </li>

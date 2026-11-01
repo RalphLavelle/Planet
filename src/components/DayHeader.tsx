@@ -43,7 +43,10 @@ export function DayHeader({ day, index, title, photo = null, weather, collapsed,
             </form>
           ) : (
             <h3 id={`h-${day.id}`} className="day-title">
-              {title}
+              {/* The whole banner is the tap target: this button's ::after stretches over it (see .day-hit in globals.css). */}
+              <button type="button" className="day-hit" onClick={onToggle} aria-expanded={!collapsed} aria-controls={bodyId}>
+                <span className="sr-only">Day {index + 1}:</span>{" "}{title}
+              </button>
               {!readOnly && <button className="icon-btn title-btn" onClick={() => { setValue(title); setEditing(true); }} aria-label={`Rename day ${index + 1}`}><Pencil size={14} /></button>}
               {!readOnly && day.titleMode === "user" && <button className="btn btn-small btn-ghost title-reset" onClick={onReset}><RotateCcw size={12} aria-hidden="true" /> Auto title</button>}
             </h3>
@@ -61,9 +64,7 @@ export function DayHeader({ day, index, title, photo = null, weather, collapsed,
             </div>
           )}
         </div>
-        <button className="icon-btn day-toggle" onClick={onToggle} aria-expanded={!collapsed} aria-controls={bodyId} aria-label={`${collapsed ? "Expand" : "Collapse"} day ${index + 1}`}>
-          <ChevronDown size={18} className={collapsed ? "" : "rot"} />
-        </button>
+        <span className="day-chevron" aria-hidden="true"><ChevronDown size={20} className={collapsed ? "" : "rot"} /></span>
       </div>
     </header>
   );

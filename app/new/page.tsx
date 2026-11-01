@@ -17,6 +17,7 @@ import { getServices } from "@/services/container";
 import { generateTrip, generationNotice } from "@/services/trips";
 import { CATALOG } from "@/services/itinerary/catalog";
 import { copy } from "@/lib/storageCopy";
+import { nextOpenId } from "@/lib/accordion";
 
 const CURRENCIES = ["GBP", "EUR", "USD", "TRY", "JPY", "AUD", "CAD", "CHF", "SEK", "NOK", "DKK"];
 function isoIn(days: number) { const d = new Date(); d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10); }
@@ -41,6 +42,8 @@ export default function NewTrip() {
   const [notice, setNotice] = useState("");
   const [saveError, setSaveError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  // Accordion for the draft days: undefined = default (first day open), null = all closed.
+  const [openDayState, setOpenDay] = useState<string | null | undefined>(undefined);
   const [edited, setEdited] = useState(false); // draft has hand edits that regenerating would discard
   const [flightsOpen, setFlightsOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -68,6 +71,9 @@ export default function NewTrip() {
     getServices().drafts.saveDraft(next).catch(() => {});
   }
 
+  const firstDayId = () => draft?.days[0]?.id ?? null;
+  const openDay = openDayState === undefined ? firstDayId() : openDayState;
+
   async function generate(nextSeed = seed) {
     if (!validateBasics()) { setStep(0); return; }
     if (edited && !window.confirm("Generating again replaces the edits you made to this draft. Continue?")) return;
@@ -78,7 +84,7 @@ export default function NewTrip() {
       const t = await generateTrip(input, s.generator, nextSeed, setProgress);
       setNotice(generationNotice(t) ?? "");
       await s.drafts.saveDraft(t);
-      setDraft(t); setEdited(false); setEditingId(null); setStep(2);
+      setDraft(t); setOpenDay(undefined); setEdited(false); setEditingId(null); setStep(2);
     } catch { setNotice("Something went wrong while drafting — please try again."); } finally { setBusy(false); setProgress(""); }
   }
 
@@ -176,11 +182,11 @@ export default function NewTrip() {
         {step === 2 && draft && (
           <section aria-label="Preview">
             {draft.generator === "osm-discovery-v1"
-              ? <p className="notice">Places in this draft are <strong>real places found on OpenStreetMap and Wikipedia</strong> near {draft.destination.name}, ranked by how notable they are. Prices and opening hours are unknown unless listed; meal slots without a named place are general suggestions. Nothing is saved until you confirm.</p>
-              : <p className="notice">This draft uses <strong>demonstration content</strong>: places and price ranges are illustrative and not verified. Nothing is saved until you confirm. You can edit everything after saving.</p>}
+              ? <p className="notice"><span>Places in this draft are <strong>real places found on OpenStreetMap and Wikipedia</strong> near {draft.destination.name}, ranked by how notable they are. Prices and opening hours are unknown unless listed; meal slots without a named place are general suggestions. Nothing is saved until you confirm.</span></p>
+              : <p className="notice"><span>This draft uses <strong>demonstration content</strong>: places and price ranges are illustrative and not verified. Nothing is saved until you confirm. You can edit everything after saving.</span></p>}
             {notice && <p className="notice notice-warn" role="status">{notice}</p>}
             {draft.days.map((d) => (
-              <Collapsible key={d.id} id={`preview-${d.id}`} level={3} defaultOpen={d.id === draft.days[0].id} className="preview-day" icon={<DestinationMotif size={18} />} title={formatDay(d.date)} summary={`${d.title} · ${d.activities.length} stops`}>
+              <Collapsible key={d.id} id={`preview-${d.id}`} level={3} open={openDay === d.id} onOpenChange={(o) => setOpenDay((cur) => nextOpenId(cur === undefined ? firstDayId() : cur, d.id, o))} className="preview-day" icon={<DestinationMotif size={18} />} title={formatDay(d.date)} summary={`${d.title} · ${d.activities.length} stops`}>
                 <ul className="activities day-items" aria-label={`Items for ${formatDay(d.date)}`}>
                   {d.activities.map((a) => <ActivityRow key={a.id} trip={draft} dayId={d.id} activity={a} editing={editingId === a.id} onEditing={(o) => setEditingId(o ? a.id : null)} onChange={updateDraft} />)}
                 </ul>

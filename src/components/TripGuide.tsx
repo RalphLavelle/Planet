@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import {
-  CalendarDays, ChevronsDownUp, ChevronsUpDown, Droplets, Map as MapIcon, Share2, Sparkles, ListOrdered, CloudRain, CloudSun, Copy, ExternalLink, Lightbulb, Link2, MapPin,
+  CalendarDays, ChevronsDownUp, Droplets, Map as MapIcon, Share2, Sparkles, ListOrdered, CloudRain, CloudSun, Copy, ExternalLink, Lightbulb, Link2, MapPin,
   PlaneLanding, PlaneTakeoff, RefreshCw, Sun, Thermometer, Wallet,
 } from "lucide-react";
 import type { Activity, ItineraryDay, Trip } from "@/domain/schemas";
@@ -21,6 +21,7 @@ import { DayHeader, dayBannerPhotos } from "./DayHeader";
 import { displayDayTitle } from "@/domain/dayTitles";
 import { AddItem } from "./AddItem";
 import { copy as words } from "@/lib/storageCopy";
+import { collapseAll, normalizeCollapsed, toggleDay as toggleDayState } from "@/lib/accordion";
 import type { GeoPoint } from "@/domain/schemas";
 import { ActivityCategoryIcon, PhotoCredit, StatusBadge } from "./ui";
 
@@ -39,17 +40,19 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
   const [includeFlights, setIncludeFlights] = useState(false);
   const [flightsChanged, setFlightsChanged] = useState(false);
   const [base, setBase] = useState<GeoPoint | null>(null);
-  const [collapsed, setCollapsed] = useState<string[]>(() => trip.days.slice(1).map((d) => d.id)); // first day open by default
+  const allDayIds = trip.days.map((d) => d.id);
+  const [collapsed, setCollapsed] = useState<string[]>(() => allDayIds.slice(1)); // first day open by default
   useEffect(() => {
     let live = true;
-    services.uiPrefs.hasCollapsedDays(trip.id).then(async (has) => { const ids = has ? await services.uiPrefs.getCollapsedDays(trip.id) : trip.days.slice(1).map((d) => d.id); if (live) setCollapsed(ids); });
+    services.uiPrefs.hasCollapsedDays(trip.id).then(async (has) => { const ids = has ? await services.uiPrefs.getCollapsedDays(trip.id) : allDayIds.slice(1); if (live) setCollapsed(normalizeCollapsed(allDayIds, ids)); });
     return () => { live = false; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip.id]);
   const isCollapsed = (id: string) => collapsed.includes(id);
   const persistCollapsed = (ids: string[]) => { setCollapsed(ids); services.uiPrefs.setCollapsedDays(trip.id, ids); };
-  const toggleDay = (id: string) => persistCollapsed(isCollapsed(id) ? collapsed.filter((x) => x !== id) : [...collapsed, id]);
-  const setCollapsedAll = (all: boolean) => persistCollapsed(all ? trip.days.map((d) => d.id) : []);
+  /** Accordion: opening a day collapses the others. */
+  const toggleDay = (id: string) => persistCollapsed(toggleDayState(allDayIds, collapsed, id));
+  const setCollapsedAll = () => persistCollapsed(collapseAll(allDayIds));
   useEffect(() => {
     let live = true;
     if (!trip.accommodation) { setBase(null); return; }
@@ -134,7 +137,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
         </div>
       </Collapsible>
 
-      <nav className="day-nav" aria-label="Days">
+      <nav className={`day-nav${trip.days.length > 7 ? " day-nav-many" : ""}`} aria-label="Days">
         {trip.days.map((d, i) => (
           <a key={d.id} href={`#day-${d.id}`} className={d.id === activeDay ? "on" : ""} onClick={() => { setActiveDay(d.id); if (isCollapsed(d.id)) toggleDay(d.id); }}>
             <span className="day-nav-motif"><DestinationMotif size={14} /></span><span className="day-nav-title"><CalendarDays size={13} aria-hidden="true" /> Day {i + 1}</span><small>{formatDay(d.date, { weekday: "short", day: "numeric" })}</small>
@@ -144,8 +147,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
       <div className="row between day-controls">
         <p className="muted small-print"><DestinationMotif size={14} /> {trip.days.length} days · {trip.days.reduce((n, d) => n + d.activities.length, 0)} stops</p>
         <div className="row">
-          <button className="btn btn-ghost btn-small" onClick={() => setCollapsedAll(false)} disabled={collapsed.length === 0}><ChevronsUpDown size={14} aria-hidden="true" /> Expand all</button>
-          <button className="btn btn-ghost btn-small" onClick={() => setCollapsedAll(true)} disabled={collapsed.length === trip.days.length}><ChevronsDownUp size={14} aria-hidden="true" /> Collapse all</button>
+          <button className="btn btn-ghost btn-small" onClick={setCollapsedAll} disabled={collapsed.length === trip.days.length}><ChevronsDownUp size={14} aria-hidden="true" /> Collapse all</button>
         </div>
       </div>
 
