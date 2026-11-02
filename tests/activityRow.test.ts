@@ -43,7 +43,7 @@ describe("draft edits carry through to Save", () => {
     const trip = await makeTrip();
     const store = new MemoryStore(); const drafts = new BrowserStorageDraftRepository(() => store);
     const a = trip.days[0].activities[0];
-    let draft = edit.applyItemEdit(trip, trip.days[0].id, a.id, { title: "My tweak", startTime: "09:15" }, { dayId: trip.days[1].id, position: 0 });
+    let draft = edit.applyItemEdit(trip, trip.days[0].id, a.id, { title: "My tweak", startTime: "09:15" }, { dayId: trip.days[1].id });
     draft = edit.addActivity(draft, trip.days[0].id, { title: "Coffee with Sam", startTime: "08:00" });
     draft = edit.removeActivity(draft, trip.days[2].id, trip.days[2].activities[0].id);
     await drafts.saveDraft(draft);

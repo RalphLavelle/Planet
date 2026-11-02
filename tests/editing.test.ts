@@ -9,15 +9,11 @@ describe("itinerary editing", () => {
     let t = await makeTrip();
     const [d1, d2] = t.days;
     const [a, b] = d2.activities;
-    t = edit.reorderActivity(t, d2.id, b.id, -1);
-    expect(t.days[1].activities.slice(0, 2).map((x) => x.id)).toEqual([b.id, a.id]);
-    expect(edit.reorderActivity(t, d2.id, b.id, -1)).toBe(t); // no-op at boundary
     t = edit.moveActivity(t, d2.id, a.id, d1.id);
-    expect(t.days[0].activities.at(-1)!.id).toBe(a.id);
-    expect(t.days[0].activities.at(-1)!.origin).toBe("edited");
+    expect(t.days[0].activities.find((x) => x.id === a.id)!.origin).toBe("edited");
     expect(t.days[1].activities.find((x) => x.id === a.id)).toBeUndefined();
-    t = edit.addActivity(t, d1.id, { title: "Ferry", startTime: "17:00" });
-    const added = t.days[0].activities.at(-1)!;
+    t = edit.addActivity(t, d1.id, { title: "Ferry", startTime: "23:30" });
+    const added = t.days[0].activities.at(-1)!; // latest start, so last in time order
     expect(added).toMatchObject({ title: "Ferry", origin: "manual", category: "custom" });
     t = edit.updateActivity(t, d1.id, added.id, { notes: "Gate E7", durationMinutes: 30 });
     expect(t.days[0].activities.at(-1)).toMatchObject({ notes: "Gate E7", durationMinutes: 30, origin: "manual" });

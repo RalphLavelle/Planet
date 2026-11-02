@@ -1,10 +1,14 @@
-import { ActivitySchema, FlightsSchema, MEAL_DEFAULTS, type Activity, type GeoPoint, type Meal, type Trip, type Venue } from "@/domain/schemas";
+import { ActivitySchema, FlightsSchema, MEAL_DEFAULTS, type Activity, type GeoPoint, type Meal, type Place, type Trip, type Venue } from "@/domain/schemas";
 import { newId } from "@/lib/ids";
 import { retitle } from "@/domain/dayTitles";
+import { withSortedDays } from "@/domain/order";
 
 /** Pure, immutable itinerary operations. Every op returns a new Trip with updatedAt bumped. */
-/** Every activity change goes through here so auto day titles are always recomputed from current activities. */
-const touch = (t: Trip, days: Trip["days"]): Trip => retitle({ ...t, days, updatedAt: new Date().toISOString() });
+/**
+ * Every activity change goes through here, so days are always put back in start-time order (untimed items last, in
+ * their existing order) and auto day titles are recomputed from the current activities.
+ */
+const touch = (t: Trip, days: Trip["days"]): Trip => retitle(withSortedDays({ ...t, days, updatedAt: new Date().toISOString() }));
 const findDay = (t: Trip, dayId: string) => { const i = t.days.findIndex((d) => d.id === dayId); if (i < 0) throw new Error("Day not found"); return i; };
 
 export type ActivityPatch = Partial<Pick<Activity, "title" | "notes" | "startTime" | "durationMinutes" | "description">>;
@@ -36,26 +40,29 @@ export function addMeal(t: Trip, dayId: string, input: { meal: Meal; venue: Venu
     location: input.location, meal: input.meal, venue: input.venue,
     meta: { source: input.venue.source === "osm" ? "OpenStreetMap" : "You", status: "user" }, origin: "manual",
   });
-  // Insert before the first timed item that starts later; keep the user's existing order otherwise.
-  const acts = [...t.days[di].activities];
-  const at = acts.findIndex((x) => !!x.startTime && x.startTime > a.startTime!);
-  acts.splice(at < 0 ? acts.length : at, 0, a);
-  return touch(t, t.days.map((day, i) => i !== di ? day : { ...day, activities: acts }));
+  return touch(t, t.days.map((day, i) => i !== di ? day : { ...day, activities: [...day.activities, a] }));
+}
+
+/** Add a place the trip already knows about (from `trip.places`) to a day. Nothing is invented: every field comes from the place. */
+export function addPlace(t: Trip, dayId: string, place: Place, startTime?: string, durationMinutes = 60): Trip {
+  const di = findDay(t, dayId);
+  const a = ActivitySchema.parse({
+    id: newId("a_"), placeId: place.id, title: place.name, description: place.description, notes: "", category: place.categories[0] ?? "custom",
+    startTime: startTime || undefined, durationMinutes, location: place.location, imageRef: `category:${place.categories[0] ?? "custom"}`, indoor: place.indoor,
+    openingHoursNote: place.openingHoursNote, meta: place.meta, origin: "manual",
+  });
+  return touch(t, t.days.map((d, i) => i !== di ? d : { ...d, activities: [...d.activities, a] }));
+}
+
+/** Put a trip back to an earlier version as a NEW edit (later updatedAt), so sync keeps the revert. */
+export function restoreTrip(previous: Trip, current: Trip): Trip {
+  const at = Math.max(Date.now(), Date.parse(current.updatedAt) + 1);
+  return { ...previous, updatedAt: new Date(at).toISOString() };
 }
 
 export function removeActivity(t: Trip, dayId: string, activityId: string): Trip {
   const di = findDay(t, dayId);
   return touch(t, t.days.map((d, i) => i !== di ? d : { ...d, activities: d.activities.filter((a) => a.id !== activityId) }));
-}
-
-export function reorderActivity(t: Trip, dayId: string, activityId: string, delta: -1 | 1): Trip {
-  const di = findDay(t, dayId);
-  const acts = [...t.days[di].activities];
-  const i = acts.findIndex((a) => a.id === activityId);
-  const j = i + delta;
-  if (i < 0 || j < 0 || j >= acts.length) return t;
-  [acts[i], acts[j]] = [acts[j], acts[i]];
-  return touch(t, t.days.map((d, k) => k !== di ? d : { ...d, activities: acts }));
 }
 
 export function moveActivity(t: Trip, fromDayId: string, activityId: string, toDayId: string): Trip {
@@ -66,29 +73,10 @@ export function moveActivity(t: Trip, fromDayId: string, activityId: string, toD
   return touch(t, t.days.map((d, k) => k === fi ? { ...d, activities: d.activities.filter((x) => x.id !== activityId) } : k === ti ? { ...d, activities: [...d.activities, { ...a, origin: a.origin === "manual" ? "manual" : "edited" as const }] } : d));
 }
 
-/**
- * Put an activity at a 0-based position in a day (the same day = reorder, another day = move). The position is
- * clamped to the day's length. Moving to another day marks the item as edited.
- */
-export function placeActivity(t: Trip, activityId: string, toDayId: string, position: number): Trip {
-  const ti = findDay(t, toDayId);
-  let from = -1, idx = -1;
-  t.days.forEach((d, di) => { const i = d.activities.findIndex((a) => a.id === activityId); if (i >= 0) { from = di; idx = i; } });
-  if (from < 0) throw new Error("Activity not found");
-  const item = t.days[from].activities[idx];
-  const moved = { ...item, ...(from !== ti ? { origin: item.origin === "manual" ? ("manual" as const) : ("edited" as const) } : {}) };
-  const without = t.days.map((d, di) => di === from ? { ...d, activities: d.activities.filter((a) => a.id !== activityId) } : d);
-  const target = [...without[ti].activities];
-  target.splice(Math.max(0, Math.min(position, target.length)), 0, moved);
-  if (from === ti && target.every((a, i) => a.id === t.days[ti].activities[i]?.id)) return t;
-  return touch(t, without.map((d, di) => di === ti ? { ...d, activities: target } : d));
-}
-
-/** One save from the item editor: field edits, then (optionally) day and position. */
-export function applyItemEdit(t: Trip, dayId: string, activityId: string, patch: ActivityPatch, place?: { dayId: string; position: number }): Trip {
-  let next = updateActivity(t, dayId, activityId, patch);
-  if (place) next = placeActivity(next, activityId, place.dayId, place.position);
-  return next;
+/** One save from the item editor: field edits, then (optionally) a move to another day. Order is always by time. */
+export function applyItemEdit(t: Trip, dayId: string, activityId: string, patch: ActivityPatch, place?: { dayId: string }): Trip {
+  const next = updateActivity(t, dayId, activityId, patch);
+  return place && place.dayId !== dayId ? moveActivity(next, dayId, activityId, place.dayId) : next;
 }
 
 /** Swap two activities' positions (possibly across days) — used for user-approved weather suggestions. */
@@ -109,7 +97,7 @@ export function mergeRegenerated(current: Trip, regenerated: Trip["days"]): Trip
     const kept = old?.activities.filter((a) => a.origin !== "generated") ?? [];
     const keptPlaces = new Set(kept.map((a) => a.placeId).filter(Boolean));
     const keepTitle = old?.titleMode === "user" ? { title: old.title, titleMode: "user" as const } : {};
-    return { ...nd, ...keepTitle, id: old?.id ?? nd.id, notes: old?.notes ?? nd.notes, activities: [...nd.activities.filter((a) => !a.placeId || !keptPlaces.has(a.placeId)), ...kept].sort((a, b) => (a.startTime ?? "99").localeCompare(b.startTime ?? "99")) };
+    return { ...nd, ...keepTitle, id: old?.id ?? nd.id, notes: old?.notes ?? nd.notes, activities: [...nd.activities.filter((a) => !a.placeId || !keptPlaces.has(a.placeId)), ...kept] };
   });
   return touch(current, days);
 }

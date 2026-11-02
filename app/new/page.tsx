@@ -1,7 +1,7 @@
 "use client";
 import type React from "react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Accessibility, ArrowLeft, ArrowRight, BedDouble, CalendarCheck, CalendarDays, Check, Coins, Footprints, Gauge, Heart, ListChecks, Loader2, MapPin, PiggyBank, PlaneLanding, PlaneTakeoff, RefreshCw, Salad, SlidersHorizontal, Sparkles, StickyNote, Users } from "lucide-react";
 import { destinationImage } from "@/services/images";
 import { resolveDestination } from "@/services/itinerary/DemoItineraryGenerator";
@@ -9,6 +9,8 @@ import { PhotoCredit } from "@/components/ui";
 import { Collapsible } from "@/components/Collapsible";
 import { ActivityRow } from "@/components/ActivityRow";
 import { AddItem } from "@/components/AddItem";
+import { TripChat } from "@/components/TripChat";
+import { withSortedDays } from "@/domain/order";
 import * as edit from "@/services/editing";
 import { DestinationHero, DestinationMotif, DestinationThemeProvider, ThemedSectionDivider } from "@/components/theme";
 import { INTERESTS, PreferencesSchema, TripInputSchema, type Preferences, type Trip } from "@/domain/schemas";
@@ -35,7 +37,8 @@ export default function NewTrip() {
   const [arrNum, setArrNum] = useState(""), [arrTime, setArrTime] = useState(""), [depNum, setDepNum] = useState(""), [depTime, setDepTime] = useState("");
   const [prefs, setPrefs] = useState<Preferences>(PreferencesSchema.parse({}));
   const [errors, setErrors] = useState<Errors>({});
-  const [draft, setDraft] = useState<Trip | null>(null);
+  const [rawDraft, setDraft] = useState<Trip | null>(null);
+  const draft = useMemo(() => (rawDraft ? withSortedDays(rawDraft) : null), [rawDraft]); // always shown in time order
   const [seed, setSeed] = useState(0);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState("");
@@ -185,6 +188,7 @@ export default function NewTrip() {
               ? <p className="notice"><span>Places in this draft are <strong>real places found on OpenStreetMap and Wikipedia</strong> near {draft.destination.name}, ranked by how notable they are. Prices and opening hours are unknown unless listed; meal slots without a named place are general suggestions. Nothing is saved until you confirm.</span></p>
               : <p className="notice"><span>This draft uses <strong>demonstration content</strong>: places and price ranges are illustrative and not verified. Nothing is saved until you confirm. You can edit everything after saving.</span></p>}
             {notice && <p className="notice notice-warn" role="status">{notice}</p>}
+            <TripChat trip={draft} scope={{ kind: "trip" }} onChange={updateDraft} />
             {draft.days.map((d) => (
               <Collapsible key={d.id} id={`preview-${d.id}`} level={3} open={openDay === d.id} onOpenChange={(o) => setOpenDay((cur) => nextOpenId(cur === undefined ? firstDayId() : cur, d.id, o))} className="preview-day" icon={<DestinationMotif size={18} />} title={formatDay(d.date)} summary={`${d.title} · ${d.activities.length} stops`}>
                 <ul className="activities day-items" aria-label={`Items for ${formatDay(d.date)}`}>
@@ -193,6 +197,7 @@ export default function NewTrip() {
                 {d.activities.length === 0 && <p className="muted">A free day — add something below.</p>}
                 <AddItem dayId={d.id} cityName={draft.destination.name} center={draft.destination.location} base={null}
                   onAdd={(v) => v.kind === "activity" ? updateDraft(edit.addActivity(draft, d.id, v), `Added “${v.title}”`) : updateDraft(edit.addMeal(draft, d.id, v), `Added ${v.meal} at “${v.venue.name}”`)} />
+                <TripChat trip={draft} scope={{ kind: "day", dayId: d.id }} onChange={updateDraft} />
               </Collapsible>
             ))}
             <ThemedSectionDivider />

@@ -20,6 +20,8 @@ import { Collapsible } from "./Collapsible";
 import { DayHeader, dayBannerPhotos } from "./DayHeader";
 import { displayDayTitle } from "@/domain/dayTitles";
 import { AddItem } from "./AddItem";
+import { TripChat } from "./TripChat";
+import { withSortedDays } from "@/domain/order";
 import { copy as words } from "@/lib/storageCopy";
 import { collapseAll, normalizeCollapsed, toggleDay as toggleDayState } from "@/lib/accordion";
 import type { GeoPoint } from "@/domain/schemas";
@@ -29,7 +31,9 @@ type Props = { trip: Trip; readOnly?: boolean; onChange?: (next: Trip, label: st
 
 function WeatherIcon({ code }: { code: number }) { return code >= 51 ? <CloudRain size={18} aria-hidden="true" /> : code <= 1 ? <Sun size={18} aria-hidden="true" /> : <CloudSun size={18} aria-hidden="true" />; }
 
-export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
+export function TripGuide({ trip: rawTrip, readOnly, onChange, onRegenerate }: Props) {
+  // Saved trips from before time-ordering was enforced are shown in order too.
+  const trip = useMemo(() => withSortedDays(rawTrip), [rawTrip]);
   const theme = useDestinationTheme();
   const services = getServices();
   const [report, setReport] = useState<RefreshReport | null>(null);
@@ -151,6 +155,8 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
         </div>
       </div>
 
+      {!readOnly && <TripChat trip={trip} scope={{ kind: "trip" }} onChange={apply} />}
+
       {trip.days.map((day, i) => {
         const w = weatherByDate.get(day.date);
         return (
@@ -168,6 +174,7 @@ export function TripGuide({ trip, readOnly, onChange, onRegenerate }: Props) {
             ) : <ol className="activities">{day.activities.map((a) => renderActivity(day, a))}</ol>}
             {i === trip.days.length - 1 && flightPanel("departure")}
             {!readOnly && <AddItem dayId={day.id} cityName={trip.destination.name} center={trip.destination.location} base={base} onAdd={(v) => v.kind === "activity" ? apply(edit.addActivity(trip, day.id, v), `Added “${v.title}”`) : apply(edit.addMeal(trip, day.id, v), `Added ${v.meal} at “${v.venue.name}”`)} />}
+            {!readOnly && <TripChat trip={trip} scope={{ kind: "day", dayId: day.id }} onChange={apply} />}
             </div>
           </section>
         );
